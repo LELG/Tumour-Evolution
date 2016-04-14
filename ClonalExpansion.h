@@ -10,7 +10,7 @@
 #include <map>
 #include <memory>           // std::unique_ptr
 #include <vector>
-
+#include "config.h"
 class Clonal_Expansion
 {
 
@@ -21,6 +21,12 @@ public:
 	unsigned long long int Population_Size;
 
 	double feedback; // This is the output of a proportional control system
+	enum Mitosis 
+	{
+		Standard = 0, 
+		Binomial, 
+		Network
+	} mitosis;
 		
 		/**
 			This is the main Data Structure to store all clones, this will
@@ -35,14 +41,26 @@ public:
 
 		 std::vector<std::unique_ptr<Clone> > *Tumour = new std::vector<std::unique_ptr<Clone> >;
 
-
-
 public:
 	Clonal_Expansion();
 	~Clonal_Expansion();
 	void printParameters();
 	void add_Clone_to_Tumour(void);
 	void carcinogenesis(void);
+	void carcinogenesis(unsigned long long int &neoplastic_cells);
+	std::string getMitosis_type(void);
+	bool check_G1_phase(std::unique_ptr<Clone> const & ith_clone);
+	bool exiting_G1_phase(std::unique_ptr<Clone> const & ith_clone);
+	bool check_S_phase(std::unique_ptr<Clone> const & ith_clone);
+	bool exiting_S_phase(std::unique_ptr<Clone> const & ith_clone);
+	bool check_G2_phase(std::unique_ptr<Clone> const & ith_clone);
+	bool exiting_G2_phase(std::unique_ptr<Clone> const & ith_clone);
+	void Transition_From_G1_S(std::unique_ptr<Clone> const & ith_clone);
+	void Non_Mutagenic_Mitosis_Standard(std::unique_ptr<Clone> const & ith_clone);
+	void Transition_From_S_G2(std::unique_ptr<Clone> const & ith_clone);
+	void Transition_From_G2_M(std::unique_ptr<Clone> const & ith_clone);
+	void Update_Population_After_Division(std::unique_ptr<Clone> const & ith_clone);
+	void Check_Mitosis_Network_Status(std::unique_ptr<Clone> const & ith_clone);
 };
 
 #endif

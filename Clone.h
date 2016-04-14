@@ -7,7 +7,9 @@
 
 #include <string>
 #include <map>
-	
+#include <memory>           // std::unique_ptr
+#include <vector>
+#include <tuple>        // std::tuple, std::make_tuple, std::get
 class Clone 
 {
 
@@ -19,6 +21,7 @@ class Clone
         NOTE: Defining as a const makes it read only
         consider this to model only non - Stem Cells.
     *************************************************/
+public:
     unsigned int  Number_of_Memebers_to_Start_Heterogeneity;
 	unsigned int Generation_ID_Counter;
 	unsigned int Driver_10_fold_accumulation;
@@ -52,6 +55,49 @@ class Clone
 
 	std::string Generation_ID;
 
+	
+	std::tuple<unsigned int, // G0{S} 
+			   unsigned int, // G0{Dy}
+			   unsigned int, // G0{->G1}
+			   double, 		// px {Stay}
+			   double> 		// py {Die}
+			   			G0_status;
+								
+	std::tuple<unsigned int, // G1 {S}
+			   unsigned int, // G1 {Dy}
+			   unsigned int, // G1 {->G2}
+			   double,		 // px
+			   double>		 // py	 	
+			   			G1_status;
+	
+	std::tuple<unsigned int, // G2{S} 
+			   unsigned int, // G2{Dy}
+			   unsigned int, // G2{->S}
+			   double,		 // px
+			   double> 		 // py
+			   			G2_status;
+	
+	std::tuple<unsigned int, // S{S}
+			   unsigned int, // S{Dy}
+			   unsigned int, // S{->M} 
+			   double,		 // px 
+			   double> 		 // py 
+			   			S_status;
+	
+	std::tuple<unsigned int, // M{S}
+			   unsigned int, // M{Dy}
+			   unsigned int, // M{Div}
+			   double,       // px
+			   double> 	     // py
+			   			M_status;
+
+	unsigned int G0_cells;
+	unsigned int G1_cells;
+	unsigned int G2_cells;
+	unsigned int  S_cells;
+	unsigned int  M_cells;
+
+	unsigned int Available_cells;
 
 public:
 	Clone();
@@ -60,6 +106,8 @@ public:
 	void printTest(void);
 	void LoadElementsFromMap(std::map<std::string, std::string> *rawData);
 	void FileReader(std::string path);
+	void printValues (void);
+
 
 };
 

@@ -25,12 +25,12 @@
 
 bool FileExists (const std::string& name);
 
-static inline void ltrim(std::string &s);
-static inline void rtrim(std::string &s); 
-static inline void trim(std::string &s);
-static inline std::string ltrimmed(std::string s);
-static inline std::string rtrimmed(std::string s);
-static inline std::string trimmed(std::string s) ;
+ void ltrim(std::string &s);
+ void rtrim(std::string &s); 
+ void trim(std::string &s);
+ std::string ltrimmed(std::string s);
+std::string rtrimmed(std::string s);
+ std::string trimmed(std::string s) ;
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
 
