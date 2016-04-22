@@ -37,6 +37,12 @@ void Basic_Clonal_Expansion(std::unique_ptr<Clonal_Expansion>  & tmr,
 							bool *alive); // send data
 std::tuple<unsigned long long int, unsigned long long int, unsigned long long int, bool, bool> Basic_Clonal_Expansion(std::unique_ptr<Clonal_Expansion>  & tmr, int Generation_ID, unsigned int hours);
 
+void Generate_Clone_Generation_ID(std::string & newGeneration_ID,
+								  int & Parent_Generation_ID_Counter, 
+								  const std::string & Parent_ID, 
+								  unsigned int & years, 
+								  unsigned int & hours);
+
 void Generate_Clone_Generation_ID( std::string *newGeneration_ID,
 									int *Parent_Generation_ID_Counter, 
 									const std::string &Parent_ID, 

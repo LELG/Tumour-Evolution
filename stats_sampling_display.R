@@ -37,6 +37,7 @@ df <- read.table("~/Documents/TEM/src/core/Tests/Update_Proliferation_Rate.txt",
 hist( df$V1 , col="blue", main="Update_Proliferation_Rate") 
 
 
-
+df <- read.table("~/Documents/TEM/src/core/Tester/TumourFunctions/laplace.txt", header = FALSE)
+hist( df$V1 , col="blue", main="Laplace") 
 
 

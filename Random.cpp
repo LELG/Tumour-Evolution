@@ -23,7 +23,7 @@
 #include <gsl/gsl_math.h>
 #include <math.h>
 #include <iostream>         // std::cout,std::endl
-
+#include <fstream>
 
 Random::Random()
 {}
@@ -200,9 +200,9 @@ unsigned int * Random::Update_G0_Phase(unsigned int &G0_cells, double & p_stayin
 ****************************************************************************/
 unsigned int * Random::Update_G1_Phase(unsigned int & G1_cells, double & p_staying_G1, double & p_dying_in_G1, double & p_exiting_G1)
 {
-	static unsigned int buffer[3] = {0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
-	double p_vector[] = { p_staying_G1, p_dying_in_G1, p_exiting_G1 };
-	const size_t K_S = 3;	
+	static unsigned int buffer[4] = {0, 0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
+	double p_vector[] = { p_staying_G1, p_dying_in_G1, p_exiting_G1, 1.0 - (p_staying_G1 + p_dying_in_G1 + p_exiting_G1) };
+	const size_t K_S = 4;	
 
 	gsl_ran_multinomial ( r_global, // Random Seed Generator 
 						  K_S, 		// Number of output elements
@@ -324,8 +324,58 @@ unsigned int * Random::Newborn( unsigned int & Newborn_cells, double & p_idle, d
 
 	return buffer;
 
+}
 
+unsigned int * Random::Mutational_Effects()
+{
+	double p_vector[] = {KILLER_PROBABILITY, DRIVER_PROBABILITY, 1.0 - (KILLER_PROBABILITY + DRIVER_PROBABILITY) };
+	static unsigned int buffer[3] = {0, 0, 0};
+	const size_t K_S = 3;
 
+	gsl_ran_multinomial ( r_global,
+						  K_S,
+						  1,
+						  p_vector,
+						  buffer
+						);
+	return buffer;
+}
+
+void Random::Laplace(double & effect)
+{
+	effect = gsl_ran_laplace (r_global, 0.001);
+}
+
+void Random::Valid_Limits(double & effect)
+{
+	if(effect < 0.0)
+		effect = 0.0;
+	else if( effect > 1.0 )
+		effect = 1.0;
+
+}
+
+void Random::Laplace(double & effect, unsigned int & Clone_size)
+{
+	double a = (double) 1/Clone_size;
+	effect += gsl_ran_laplace (r_global, a);
+	Valid_Limits( effect );
+	//std::cout << "Clone_Size " << Clone_size << " a " << a <<std::endl;
+}
+
+unsigned int * Random::Mutational_Proportions( double & p_go_to_G0, double & p_go_to_G1, unsigned int & Mutant_Cells )
+{
+	static unsigned int buffer[3] = {0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
+	double p_vector[] = { p_go_to_G0, p_go_to_G1, 1.0 - ( p_go_to_G0 + p_go_to_G1 ) };
+	const size_t K_S = 3;
+
+	gsl_ran_multinomial ( r_global,
+						  K_S,
+						  Mutant_Cells,
+						  p_vector,
+						  buffer
+						);
+	return buffer;
 }
 
 

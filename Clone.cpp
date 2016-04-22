@@ -34,7 +34,7 @@ Clone::Clone()
 	In_S_Phase(0),
 	In_G2_Phase(0),
 	In_M_Phase(0),
-	P_Expansion{DEATH_RATE, PROLIFERATION_RATE, MUT_RATE, 1.0-(DEATH_RATE + PROLIFERATION_RATE + MUT_RATE)},
+	P_Expansion{DEATH_RATE, PROLIFERATION_RATE, MUT_RATE, 0.01}, //P_Expansion{DEATH_RATE, PROLIFERATION_RATE, MUT_RATE, 1.0-(DEATH_RATE + PROLIFERATION_RATE + MUT_RATE)},
 	Remaining_Time_in_G1_Phase(0),
 	Remaining_Time_in_S_Phase(0),
 	Remaining_Time_in_G2_Phase(0),
@@ -44,7 +44,7 @@ Clone::Clone()
 	final_PR(0.0),
 	Generation_ID(""),
 	G0_status {0, 0, 0, 0.0, 0.0},
-	G1_status {0, 0, 0, 0.0, 0.0},			
+	G1_status {0, 0, 0, 0, 0.0, 0.0},			
 	G2_status {0, 0, 0, 0.0, 0.0},
 	S_status  {0, 0, 0, 0.0, 0.0},
 	M_status  {0, 0, 0, 0.0, 0.0},
@@ -323,6 +323,8 @@ void  Clone::LoadElementsFromMap(std::map<std::string, std::string> *rawData)
  	std::cout << "############################################" << "\n\n";
 
  }
+
+
  
  
 

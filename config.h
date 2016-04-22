@@ -49,11 +49,49 @@ extern const int MUTATION_MODEL; //= 1;
 
 extern const unsigned long long MAX_CLONE_SIZE;
 
-  const unsigned int P_STAYING  = 3;
-  const unsigned int P_DYING  = 4;
-  const unsigned int STAYING_CELLS   = 0;
-  const unsigned int DYING_CELLS     = 1;
-  const unsigned int EXITING_CELLS   = 2;
+//g1
+const unsigned int P_STAYING_G1 = 4;
+const unsigned int P_DYING_G1   = 5;
+	
+const unsigned int P_STAYING  = 3;
+const unsigned int P_DYING  = 4;
+
+//G1
+const unsigned int STAYING_CELLS   = 0;
+const unsigned int DYING_CELLS     = 1;
+const unsigned int EXITING_CELLS   = 2;
+const unsigned int FROM_G1_TO_G0   = 3;
+
+const unsigned int AV_CELLS_IDLING   = 0;   
+const unsigned int AV_CELLS_DYING   = 1;
+const unsigned int AV_CELLS_to_G0   = 2;   
+const unsigned int AV_CELLS_to_G1   = 3;   
+
+const unsigned int DIV_CELLS_IDLING = 0;
+const unsigned int DIV_CELLS_MUTATING = 1;
+const unsigned int DIV_CELLS_to_G0 = 2;
+const unsigned int DIV_CELLS_to_G1 = 3;
+
+const unsigned int P_Expansion_DR = 0;
+const unsigned int P_Expansion_PR = 1;
+const unsigned int P_Expansion_MR = 2;
+const unsigned int P_Expansion_QR = 3;
+
+const unsigned int DRIVER_CELLS = 1;
+const unsigned int PASSENGER_CELLS = 2;
+
+const unsigned int MUTANTS_to_G0 = 0;
+const unsigned int MUTANTS_to_G1 = 1;
+const unsigned int MUTANTS_to_IDLE = 2;
+
+// Constant Values
+const unsigned int STAY = 0;
+const unsigned int DIE  = 1;
+const unsigned int NEXT_STAGE = 2;
+const unsigned int REVERT_TO_G0 = 3;
+
+
+
 
 
 #endif

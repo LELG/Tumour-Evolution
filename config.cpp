@@ -10,7 +10,7 @@
 #include <limits>
 
 
-const double MUT_RATE           = 0.0000001; 
+const double MUT_RATE           = 0.0000001; // 0.0000001
 const double DEATH_RATE         = 0.02;
 const double PROLIFERATION_RATE = 0.03;
 

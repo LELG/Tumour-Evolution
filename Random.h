@@ -5,7 +5,6 @@
 #ifndef RANDOM_H
 #define RANDOM_H
 
-
 #include "config.h"
 #include <string>
 #include <map>
@@ -31,7 +30,7 @@
 #include <math.h>
 #include <iostream>         // std::cout,std::endl
 #include <vector>
-
+#include <fstream>
 
 class Random
 {
@@ -64,6 +63,11 @@ public:
     unsigned int * Update_M_Phase(unsigned int & M_cells, double & p_staying_M, double & p_dying_M, double & p_exiting_M);
     unsigned int * Clonal_Functions(unsigned int & Available_cells, double & p_of_going_G0, double & p_entering_mitosis, double & p_dying );
     unsigned int * Newborn( unsigned int & Newborn_cells, double & p_idle, double & p_mutate, double & p_go_to_G0 );
+    unsigned int * Mutational_Effects();
+    void Valid_Limits(double & effect);
+    void Laplace(double & effect);
+    void Laplace(double & effect, unsigned int & Clone_size);
+    unsigned int * Mutational_Proportions( double & p_go_to_G0, double & p_go_to_G1, unsigned int & Mutant_Cells );
 
 private:        
     std::mt19937 eng{std::random_device{}()};

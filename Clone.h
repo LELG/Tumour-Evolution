@@ -66,6 +66,7 @@ public:
 	std::tuple<unsigned int, // G1 {S}
 			   unsigned int, // G1 {Dy}
 			   unsigned int, // G1 {->G2}
+			   unsigned int, // G1 {G0<-}
 			   double,		 // px
 			   double>		 // py	 	
 			   			G1_status;

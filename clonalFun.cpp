@@ -195,6 +195,43 @@ void Basic_Clonal_Expansion(std::unique_ptr<Clonal_Expansion>  & tmr,
 	
 }
 
+void Generate_Clone_Generation_ID(std::string & newGeneration_ID,
+								  int & Parent_Generation_ID_Counter, 
+								  const std::string & Parent_ID, 
+								  unsigned int & years, 
+								  unsigned int & hours)
+{
+
+	std::string heredity_pattern = Parent_ID.substr( 0, Parent_ID.find("-") );
+	std::string Clone_ID ("");
+		//cout << "I GET " << heredity_pattern << endl;
+
+		if(heredity_pattern.compare("P") == 0)
+		{
+			//cout << "I GET 1 " << heredity_pattern << endl;
+			std::string Clone_ID_tag ("PC");
+			Clone_ID_tag.append(std::to_string(Parent_Generation_ID_Counter));Clone_ID_tag.append("-");
+			Clone_ID_tag.append(std::to_string(years));Clone_ID_tag.append(":");Clone_ID_tag.append(std::to_string(hours));
+			Clone_ID = Clone_ID_tag;
+		}
+		else
+		{
+			
+			std::string Clone_ID_tag ("");
+			Clone_ID_tag.append(heredity_pattern); Clone_ID_tag.append(","); Clone_ID_tag.append(std::to_string(Parent_Generation_ID_Counter));
+			Clone_ID_tag.append("-");
+			Clone_ID_tag.append(std::to_string(years));Clone_ID_tag.append(":");Clone_ID_tag.append(std::to_string(hours));
+			Clone_ID = Clone_ID_tag;
+
+		}
+
+	//std::cout << "ID " << Parent_ID << std::endl;
+//	std::cout << "HP " << heredity_pattern << std::endl;
+
+	newGeneration_ID = Clone_ID;
+
+}
+
 //Generate clone name Id 
 //pointer version
 // this is a tricky function

@@ -45,6 +45,7 @@ public:
 	Clonal_Expansion();
 	~Clonal_Expansion();
 	void printParameters();
+	void printValues (std::unique_ptr<Clone> const & ith_clone);
 	void add_Clone_to_Tumour(void);
 	void carcinogenesis(void);
 	void carcinogenesis(unsigned long long int &neoplastic_cells);
@@ -60,7 +61,14 @@ public:
 	void Transition_From_S_G2(std::unique_ptr<Clone> const & ith_clone);
 	void Transition_From_G2_M(std::unique_ptr<Clone> const & ith_clone);
 	void Update_Population_After_Division(std::unique_ptr<Clone> const & ith_clone);
-	void Check_Mitosis_Network_Status(std::unique_ptr<Clone> const & ith_clone);
+	void Estimate_Mutational_Effects(unsigned int & Mutant_Cells, unsigned long long int & Clone_Size);
+	unsigned int * Update_Clonal_Mutational_Burden(unsigned int & ith_clone, unsigned int & Mutant_cells, unsigned int & years, unsigned int & hours );
+	void carcinogenesis_from_driver(unsigned int & ith_clone, unsigned int & years, unsigned int & hours);
+	void Check_for_Clonal_Extintion_at_min_size(unsigned int & ith_clone);
+	void Probabilities_of_Cell_Division (unsigned int & ith_clone, double & p_idle, double & p_go_to_G0 );
+	void Check_Mitosis_Network_Status(unsigned int & ith_clone, unsigned int & years, unsigned int & hours);
+
+	
 };
 
 #endif
