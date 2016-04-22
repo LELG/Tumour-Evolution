@@ -607,16 +607,24 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, un
 											   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR],
 											   p_go_to_G0 
 											  );
+	std::cout << "[ DV = " << std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) << " ] "
+			  << "; PDiv(Idle) = "   << p_idle 
+			  << " ; MR = "       <<  Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR]
+			  << " ; Idling = "   <<  Division_Model[DIV_CELLS_IDLING]
+			  << " ; Muts = "     << Division_Model[DIV_CELLS_MUTATING]
+			  << " ; To G0 = "    << Division_Model[DIV_CELLS_to_G0]
+			  << " ; To G1 = "    << Division_Model[DIV_CELLS_to_G1]
+			  << std::endl;
 
-	// std::cout << "[ DV = " << Tumour -> at( ith_clone ) -> M_status << " ] "
-	// 				       << "PDiv(Idle): " << p_idle 
-	// 				       << " ; PDiv(G0) = " << p_go_to_G0 
-	// 				       << " ; MR = " <<  Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR] 
-	// 					   << " ; Idling = " <<  Division_Model[DIV_CELLS_IDLING]
-	// 					   << " ; Muts = " << Division_Model[DIV_CELLS_MUTATING]
-	// 					   << " ; To G0 = " << Division_Model[DIV_CELLS_to_G0]
-	// 					   << " ; To G1 = " << Division_Model[DIV_CELLS_to_G1] 
-	// 					   << std::endl;
+	//std::cout << "[ DV = " << std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status << " ] "
+					    //    << "PDiv(Idle): "   << p_idle 
+					    //    << " ; PDiv(G0) = " << p_go_to_G0 
+					    //    << " ; MR = "       <<  Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR] 
+						   // << " ; Idling = "   <<  Division_Model[DIV_CELLS_IDLING]
+						   // << " ; Muts = "     << Division_Model[DIV_CELLS_MUTATING]
+						   // << " ; To G0 = "    << Division_Model[DIV_CELLS_to_G0]
+						   // << " ; To G1 = "    << Division_Model[DIV_CELLS_to_G1] 
+						   //<< std::endl;
 
 
 	// //update mutations
@@ -633,7 +641,7 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, un
 	// UPDATE Values
 	//
 
-	std::cout << " G0(t) = " <<  Tumour -> at( ith_clone ) -> G0_cells << std::endl;
+	std::cout << " G0(t) = " <<  Tumour -> at( ith_clone ) -> G0_cells << " to ";
 
 	Tumour -> at( ith_clone ) -> G0_cells = std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status ) + 
 											std::get<FROM_G1_TO_G0>( Tumour -> at( ith_clone ) -> G1_status ) + 
@@ -643,37 +651,38 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, un
 
 	std::cout << " G0(t + dt) = " <<  Tumour -> at( ith_clone ) -> G0_cells  << std::endl;
 											
-	std::cout << " G1(t) = " <<  Tumour -> at( ith_clone ) -> G1_cells << std::endl;
+	std::cout << " G1(t) = " <<  Tumour -> at( ith_clone ) -> G1_cells << " to "  ;
 
 	Tumour -> at ( ith_clone ) -> G1_cells =  std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G0_status ) + 
 											  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G1_status ) + 
 											  Division_Model[DIV_CELLS_to_G1] + 
 											  Clonal_update_buffer[AV_CELLS_to_G1] + 
 											  Mutations[MUTANTS_to_G1] ;
+	
 	std::cout << " G1(t + dt) = " <<  Tumour -> at( ith_clone ) -> G1_cells  << std::endl;
 
-	std::cout << " S(t) = " <<  Tumour -> at( ith_clone ) -> S_cells  << std::endl;
+	std::cout << " S(t) = " <<  Tumour -> at( ith_clone ) -> S_cells  << " to ";
 
 	Tumour -> at ( ith_clone ) -> S_cells = std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status )  +
 											std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G1_status ) ;
 
 	std::cout << " S(t + dt) = " <<  Tumour -> at( ith_clone ) -> S_cells  << std::endl;
 
-	std::cout << " G2(t) = " <<  Tumour -> at( ith_clone ) -> G2_cells  << std::endl;
+	std::cout << " G2(t) = " <<  Tumour -> at( ith_clone ) -> G2_cells  << " to " ;
 
 	Tumour -> at ( ith_clone ) -> G2_cells = std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status ) +
 											 std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> S_status ) ;
 
 	std::cout << " G2(t + dt) = " <<  Tumour -> at( ith_clone ) -> G2_cells  << std::endl;
 
-	std::cout << " M(t) = " <<  Tumour -> at( ith_clone ) -> M_cells  << std::endl;
+	std::cout << " M(t) = " <<  Tumour -> at( ith_clone ) -> M_cells  << " to " ;
 
 	Tumour -> at ( ith_clone ) -> M_cells = std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) +
 											std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G2_status ) ;
 
 	std::cout << " M(t + dt) = " <<  Tumour -> at( ith_clone ) -> M_cells  << std::endl;
 
-	std::cout << " AC(t ) = " <<  Tumour -> at( ith_clone ) -> Available_cells  << std::endl;
+	std::cout << " AC(t ) = " <<  Tumour -> at( ith_clone ) -> Available_cells  << " to ";
 
 	Tumour -> at( ith_clone ) -> Available_cells = Clonal_update_buffer[AV_CELLS_IDLING] +
 												   Division_Model[DIV_CELLS_IDLING] +
