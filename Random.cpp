@@ -344,6 +344,7 @@ unsigned int * Random::Mutational_Effects()
 void Random::Laplace(double & effect)
 {
 	effect = gsl_ran_laplace (r_global, 0.001);
+
 }
 
 void Random::Valid_Limits(double & effect)
@@ -358,9 +359,12 @@ void Random::Valid_Limits(double & effect)
 void Random::Laplace(double & effect, unsigned int & Clone_size)
 {
 	double a = (double) 1/Clone_size;
+	//TODO debuging with this a = 0.001 
+	a = 0.0001;
 	effect += gsl_ran_laplace (r_global, a);
 	Valid_Limits( effect );
 	//std::cout << "Clone_Size " << Clone_size << " a " << a <<std::endl;
+	
 }
 
 unsigned int * Random::Mutational_Proportions( double & p_go_to_G0, double & p_go_to_G1, unsigned int & Mutant_Cells )

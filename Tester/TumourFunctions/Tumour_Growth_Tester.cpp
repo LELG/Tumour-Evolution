@@ -9,7 +9,9 @@
 #include <memory>           // std::unique_ptr
 #include <cassert>
 #include <limits>
-
+#include <limits>
+#include <chrono>
+#include <thread>
 
 int main(int argc, char**argv)
 {
@@ -26,28 +28,28 @@ int main(int argc, char**argv)
 	std::unique_ptr<Clonal_Expansion>  tmr = get_Clonal_Expasion_DS();
 	tmr -> carcinogenesis();
 
-	tmr -> Tumour -> at(0) -> Available_cells = 5000;
+	tmr -> Tumour -> at(0) -> Available_cells = 50;
 
 	tmr -> Tumour -> at(0) -> G0_cells = 5;
-	std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G0_status ) = 0.40;
-	std::get<P_DYING>( tmr -> Tumour -> at(0) -> G0_status ) = 0.10;
+	std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G0_status ) = 0.20;
+	std::get<P_DYING>( tmr -> Tumour -> at(0) -> G0_status ) = 0.0000;
 
 	tmr -> Tumour -> at(0) -> G1_cells = 5;
-	std::get<P_STAYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.40;
-	std::get<P_DYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.10;
+	std::get<P_STAYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.20;
+	std::get<P_DYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.0000;
 
 	 tmr -> Tumour -> at(0) -> G2_cells = 5;
-	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.40;
-	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.10;
+	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.20;
+	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.0000;
 
 
 	 tmr -> Tumour -> at(0) -> S_cells = 5;
-	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.40;
-	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.10;
+	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.20;
+	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.0000;
 
 	 tmr -> Tumour -> at(0) -> M_cells = 5;
-	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.40;
-	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.10;
+	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.20;
+	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.0000;
 
 
 	 tmr -> Tumour -> at(0) -> Clone_Size = static_cast<unsigned long long int>(tmr -> Tumour -> at(0) -> Available_cells + 
@@ -58,6 +60,10 @@ int main(int argc, char**argv)
 	 																			tmr -> Tumour -> at(0) -> M_cells);
 
 
+
+	 std::cout << "NUMBER LIMITS\t"
+              << std::numeric_limits<unsigned int>::lowest() << '\t'
+              << std::numeric_limits<unsigned int>::max() << '\n';
 	
 	std::cout << "G0 cells: " << tmr -> Tumour -> at(0) -> G0_cells << std::endl;
 	std::cout << "G1 cells: " << tmr -> Tumour -> at(0) -> G1_cells << std::endl;
@@ -93,21 +99,23 @@ int main(int argc, char**argv)
 	unsigned int times_to_wait = 0;
 	unsigned int ith_clone = 0; 
 
-	while( ((times_to_wait < STOP_GROWTH_AFTER_DIAGNOSIS) && (years < 60) ) && (tmr -> Population_Size > 0) )
+	while( tmr -> Tumour -> at( 0 ) -> Available_cells < 2000000000 )
 	{
+		std::cout << "WHILE IN G0 >  " <<  tmr -> Tumour -> at( 0 ) -> G0_cells << std::endl;
 
 		seconds += dt;
 		if(seconds == 3600)
 		{
 			seconds = 0; hours ++;
-			for (ith_clone = 0; ith_clone < tmr -> Tumour -> size() ; ith_clone++) 			//(1) Is my clone not extinct?	
-			{
+			for (ith_clone = 0; ith_clone < tmr -> Tumour -> size() ; ith_clone++) 			//(1) Is my clone not extinct?	tmr -> Tumour -> size()
+			{	
+				std::cout << "TIME [Y:H] " << years << " : " << hours << std::endl;
 				tmr -> Check_Mitosis_Network_Status( ith_clone, years, hours ) ;
-				std::cout << "\n\n" << std::endl;
-				getchar();
 			}
 
 		}
+
+		std::this_thread::sleep_for(std::chrono::nanoseconds(3000000));
 
 		if(hours == 8764)//8764
 		{

@@ -11,8 +11,8 @@
 
 
 const double MUT_RATE           = 0.0000001; // 0.0000001
-const double DEATH_RATE         = 0.02;
-const double PROLIFERATION_RATE = 0.03;
+const double DEATH_RATE         = 0.0001;
+const double PROLIFERATION_RATE = 0.02;
 
 const unsigned long long MAXIMUM_POPULATION_SIZE =   100000; //1000000000;
 const unsigned long long MAXIMUM_POPULATION_SIZE_TO_STOP =   MAXIMUM_POPULATION_SIZE + 1000; // + 2000000000;

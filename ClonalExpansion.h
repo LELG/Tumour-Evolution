@@ -44,6 +44,7 @@ public:
 public:
 	Clonal_Expansion();
 	~Clonal_Expansion();
+	unsigned int getSize();
 	void printParameters();
 	void printValues (std::unique_ptr<Clone> const & ith_clone);
 	void add_Clone_to_Tumour(void);
@@ -67,6 +68,8 @@ public:
 	void Check_for_Clonal_Extintion_at_min_size(unsigned int & ith_clone);
 	void Probabilities_of_Cell_Division (unsigned int & ith_clone, double & p_idle, double & p_go_to_G0 );
 	void Check_Mitosis_Network_Status(unsigned int & ith_clone, unsigned int & years, unsigned int & hours);
+	void Grow_A_Tumour();
+
 
 	
 };
