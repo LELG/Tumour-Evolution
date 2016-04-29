@@ -170,6 +170,21 @@ void Clonal_Expansion::carcinogenesis_from_driver(const unsigned int & ith_clone
 	unsigned long long int NOM = Tumour -> at( ith_clone ) -> Number_of_Mutations;
 	double pr = Tumour -> at( ith_clone ) -> P_Expansion[1];
 
+	double p_st_g0 =  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status );
+	double p_dy_g0 =  std::get<P_DYING>( Tumour -> at( ith_clone ) -> G0_status );
+
+	double p_st_g1 =  std::get<P_STAYING_G1>( Tumour -> at( ith_clone ) -> G1_status );
+	double p_dy_g1 =  std::get<P_DYING_G1>( Tumour -> at( ith_clone ) -> G1_status );
+
+	double p_st_g2 =  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status );
+	double p_dy_g2 =  std::get<P_DYING>( Tumour -> at( ith_clone ) -> G2_status );
+
+	double p_st_s =  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status );
+	double p_dy_s =  std::get<P_DYING>( Tumour -> at( ith_clone ) -> S_status );
+
+	double p_st_m =  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> M_status );
+	double p_dy_m =  std::get<P_DYING>( Tumour -> at( ith_clone ) -> M_status );
+
 	std::string cloneName = "";	
 	
 	int Parent_Generation_ID_Counter = (int) Tumour -> at( ith_clone ) -> Generation_ID_Counter;
@@ -209,25 +224,25 @@ void Clonal_Expansion::carcinogenesis_from_driver(const unsigned int & ith_clone
 	Tumour -> back() -> Number_of_Memebers_to_Start_Heterogeneity = 1;
 
 	Tumour -> back() -> G0_cells = 0;
-	std::get<P_STAYING>( Tumour -> back() -> G0_status ) = 0.20;
-	std::get<P_DYING>( Tumour -> back() -> G0_status ) = 0.1000;
+	std::get<P_STAYING>( Tumour -> back() -> G0_status ) = p_st_g0;
+	std::get<P_DYING>( Tumour -> back() -> G0_status ) = p_dy_g0;
 
 	Tumour -> back() -> G1_cells = 1;
-	std::get<P_STAYING_G1>( Tumour -> back() -> G1_status ) = 0.20;
-	std::get<P_DYING_G1>( Tumour -> back() -> G1_status ) = 0.0000;
+	std::get<P_STAYING_G1>( Tumour -> back() -> G1_status ) = p_st_g1;
+	std::get<P_DYING_G1>( Tumour -> back() -> G1_status ) = p_dy_g1;
 
 	 Tumour -> back() -> G2_cells = 0;
-	 std::get<P_STAYING>( Tumour -> back() -> G2_status ) = 0.20;
-	 std::get<P_DYING>( Tumour -> back() -> G2_status ) = 0.0000;
+	 std::get<P_STAYING>( Tumour -> back() -> G2_status ) = p_st_g2;
+	 std::get<P_DYING>( Tumour -> back() -> G2_status ) = p_dy_g2;
 
 
 	 Tumour -> back() -> S_cells = 0;
-	 std::get<P_STAYING>( Tumour -> back() -> S_status ) = 0.20;
-	 std::get<P_DYING>( Tumour -> back() -> S_status ) = 0.0000;
+	 std::get<P_STAYING>( Tumour -> back() -> S_status ) = p_st_s;
+	 std::get<P_DYING>( Tumour -> back() -> S_status ) = p_dy_s;
 
 	 Tumour -> back() -> M_cells = 0;
-	 std::get<P_STAYING>( Tumour -> back() -> M_status ) = 0.20;
-	 std::get<P_DYING>( Tumour -> back() -> M_status ) = 0.0000;
+	 std::get<P_STAYING>( Tumour -> back() -> M_status ) = p_st_m;
+	 std::get<P_DYING>( Tumour -> back() -> M_status ) = p_dy_m;
 	
 
 	Population_Size++;
@@ -554,7 +569,7 @@ void Clonal_Expansion::Update_Clonal_Mutational_Burden(const unsigned int & ith_
 void Clonal_Expansion::Probabilities_of_Cell_Division (const unsigned int & ith_clone, double & p_idle, double & p_go_to_G0 )
 {
 	p_go_to_G0 = fabs( Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_PR] - Tumour -> at( ith_clone ) -> max_PR);
-	p_idle = 0.92 * (1.0 - ( Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR] + p_go_to_G0 ) );
+	p_idle = 0.62 * (1.0 - ( Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR] + p_go_to_G0 ) );
 	
 
 }
@@ -940,6 +955,8 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(const unsigned int & ith_clo
 	std::cout << " Clone_S( " <<  ith_clone << " ) = "<< Tumour -> at( ith_clone ) -> Clone_Size  << std::endl;
 	
 }
+
+
 
 
 void Clonal_Expansion::map_Feedback(  )

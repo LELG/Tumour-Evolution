@@ -34,22 +34,22 @@ int main(int argc, char**argv)
 	std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G0_status ) = 0.60;
 	std::get<P_DYING>( tmr -> Tumour -> at(0) -> G0_status ) = 0.10;
 
-	tmr -> Tumour -> at(0) -> G1_cells = 100;
+	tmr -> Tumour -> at(0) -> G1_cells = 1;
 	std::get<P_STAYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.60;
-	std::get<P_DYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.05;
+	std::get<P_DYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.00;
 
 	 tmr -> Tumour -> at(0) -> G2_cells = 0;
 	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.60;
-	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.05;
+	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.00;
 
 
 	 tmr -> Tumour -> at(0) -> S_cells = 0;
 	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.60;
-	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.05;
+	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.00;
 
 	 tmr -> Tumour -> at(0) -> M_cells = 0;
 	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.60;
-	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.05;
+	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.00;
 
 
 	 tmr -> Tumour -> at(0) -> Clone_Size = static_cast<unsigned long long int>(tmr -> Tumour -> at(0) -> Available_cells + 
@@ -95,14 +95,18 @@ int main(int argc, char**argv)
 	unsigned int seconds = 0;
 	unsigned int hours = 0;
 	unsigned int years = 0;
-	unsigned int elapsed_hours = 0;
+	//unsigned int elapsed_hours = 0;
 	unsigned int times_to_wait = 0;
 	unsigned int ith_clone = 0; 
 
 	Random r;
+	std::ofstream te_file;
+	te_file.open ("./Mitosis_Model/te_file_31.txt");
 
-	getchar();
-	while( tmr -> Population_Size < 4000000000 )
+	unsigned long long int elapsed_hours = 0;
+
+	//getchar(); 
+	while( tmr -> Population_Size < 4000000000 && !(tmr -> Population_Size == 0))
 	{
 		std::cout << "WHILE IN G0 >  " <<  tmr -> Tumour -> at( 0 ) -> G0_cells << std::endl;
 
@@ -119,17 +123,18 @@ int main(int argc, char**argv)
 			tmr -> Update_Tumour_Size();
 			tmr -> map_Feedback();
 
-
-
 		}
-
-		std::this_thread::sleep_for(std::chrono::nanoseconds(300000));
-
+		//std::this_thread::sleep_for(std::chrono::nanoseconds(30000000));
 		if(hours == 8764)//8764
 		{
 			hours = 0; years ++;
 			
 		}
+
+		//SDave to file 
+		//Pop size hours and heterogeneity
+		te_file << tmr -> Population_Size << "\t" << elapsed_hours << "\t"<< tmr -> Tumour -> size()   << "\n";
+		elapsed_hours++;
 
 	}
 
@@ -139,6 +144,7 @@ int main(int argc, char**argv)
 		std::cout << "C_S[ " << ith_clone << " ] = " << tmr -> Tumour -> at( ith_clone ) -> Clone_Size <<  "\t\t PR: " <<  tmr -> Tumour -> at (ith_clone) -> P_Expansion[1] << " MR: " << tmr -> Tumour -> at (ith_clone) -> P_Expansion[2]  <<std::endl;
 	}
 
+	te_file.close();
 
 
 
