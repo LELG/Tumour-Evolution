@@ -56,18 +56,18 @@ public:
     double Update_Proliferation_Rate(double Proliferation_Rate);
     double Uniform_Mutation_Rate_2(double Parent_mu_rate);
     unsigned int * Newborn_G0_and_G1(unsigned long long int &Newborn_cells, double & p_enter_G0);
-    unsigned int * Update_G0_Phase(unsigned int & G0_cells, double & p_staying_G0, double & p_dying_in_G0, double & p_exiting_G0);
-    unsigned int * Update_G1_Phase(unsigned int & G1_cells, double & p_staying_G1, double & p_dying_in_G1, double & p_exiting_G1);
-    unsigned int * Update_G2_Phase(unsigned int & G2_cells, double & p_staying_G2, double & p_dying_in_G2, double & p_exiting_G2);
-    unsigned int * Update_S_Phase(unsigned int & S_cells, double & p_staying_S, double & p_dying_S, double & p_exiting_S);
-    unsigned int * Update_M_Phase(unsigned int & M_cells, double & p_staying_M, double & p_dying_M, double & p_exiting_M);
-    unsigned int * Clonal_Functions(unsigned int & Available_cells, double & p_of_going_G0, double & p_entering_mitosis, double & p_dying );
-    unsigned int * Newborn( unsigned int & Newborn_cells, double & p_idle, double & p_mutate, double & p_go_to_G0 );
+    unsigned int * Update_G0_Phase(const unsigned int & G0_cells, const double & p_staying_G0, const double & p_dying_in_G0, const double & p_exiting_G0);
+    unsigned int * Update_G1_Phase(const unsigned int & G1_cells, const double & p_staying_G1, const double & p_dying_in_G1, const double & p_exiting_G1);
+    unsigned int * Update_G2_Phase(const unsigned int & G2_cells, const double & p_staying_G2, const double & p_dying_in_G2, const double & p_exiting_G2);
+    unsigned int * Update_S_Phase(const unsigned int & S_cells, const  double & p_staying_S, const double & p_dying_S, const double & p_exiting_S);
+    unsigned int * Update_M_Phase(const unsigned int & M_cells, const double & p_staying_M, const double & p_dying_M, const double & p_exiting_M);
+    unsigned int * Clonal_Functions(const unsigned int & Available_cells, const double & p_of_going_G0, const double & p_entering_mitosis, const double & p_dying );
+    void Newborn( const unsigned int & Newborn_cells, const  double & p_idle, const  double & p_mutate, const  double & p_go_to_G0, std::vector<unsigned int> & Division_Model);
     unsigned int * Mutational_Effects();
     void Valid_Limits(double & effect);
     void Laplace(double & effect);
     void Laplace(double & effect, unsigned int & Clone_size);
-    unsigned int * Mutational_Proportions( double & p_go_to_G0, double & p_go_to_G1, unsigned int & Mutant_Cells );
+    void Mutational_Proportions( const double & p_go_to_G0,const  double & p_go_to_G1, const unsigned int & Mutant_Cells, std::vector<unsigned int> & Mutations );
 
 private:        
     std::mt19937 eng{std::random_device{}()};

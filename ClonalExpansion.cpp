@@ -99,6 +99,7 @@ void Clonal_Expansion::carcinogenesis(void)
 	Tumour -> back() -> In_G1_Phase = true;
 	Tumour -> back() -> In_G2_Phase = false;
 	Tumour -> back() -> In_M_Phase = false;
+	Tumour -> back() -> clone_extinct = false;
 
 	Tumour -> back() -> Remaining_Time_in_G1_Phase = r.G1();
 	Tumour -> back() -> Remaining_Time_in_S_Phase = r.S();
@@ -117,9 +118,52 @@ void Clonal_Expansion::carcinogenesis(void)
 	std::cout << "\t\tC A R C I N O G E N E S I S" << std::endl;
 }
 
-void Clonal_Expansion::carcinogenesis_from_driver(unsigned int & ith_clone, unsigned int & years, unsigned int & hours)
+
+
+void Clonal_Expansion::Generate_Clone_Generation_ID( std::string & newGeneration_ID,
+								  const int & Parent_Generation_ID_Counter, 
+								  const std::string & Parent_ID, 
+								  const unsigned int & years, 
+								  const unsigned int & hours)
 {
-	Random r;
+
+	std::string heredity_pattern = Parent_ID.substr( 0, Parent_ID.find("-") );
+	std::string Clone_ID ("");
+		//cout << "I GET " << heredity_pattern << endl;
+
+		if(heredity_pattern.compare("P") == 0)
+		{
+			//cout << "I GET 1 " << heredity_pattern << endl;
+			std::string Clone_ID_tag ("PC");
+			Clone_ID_tag.append(std::to_string(Parent_Generation_ID_Counter));Clone_ID_tag.append("-");
+			Clone_ID_tag.append(std::to_string(years));Clone_ID_tag.append(":");Clone_ID_tag.append(std::to_string(hours));
+			Clone_ID = Clone_ID_tag;
+		}
+		else
+		{
+			
+			std::string Clone_ID_tag ("");
+			Clone_ID_tag.append(heredity_pattern); Clone_ID_tag.append(","); Clone_ID_tag.append(std::to_string(Parent_Generation_ID_Counter));
+			Clone_ID_tag.append("-");
+			Clone_ID_tag.append(std::to_string(years));Clone_ID_tag.append(":");Clone_ID_tag.append(std::to_string(hours));
+			Clone_ID = Clone_ID_tag;
+
+		}
+
+	//std::cout << "ID " << Parent_ID << std::endl;
+//	std::cout << "HP " << heredity_pattern << std::endl;
+
+	newGeneration_ID = Clone_ID;
+
+}
+
+
+
+
+void Clonal_Expansion::carcinogenesis_from_driver(const unsigned int & ith_clone, const unsigned int & years, const unsigned int & hours, Random & r)
+{
+	
+
 	double mr = Tumour -> at( ith_clone ) -> Mutation_Rate;
 	unsigned int AC = Tumour -> at( ith_clone ) -> Driver_10_fold_accumulation;
 	unsigned int Accumulated_Drivers = Tumour -> at( ith_clone ) -> Driver_10_fold_accumulation;
@@ -128,7 +172,7 @@ void Clonal_Expansion::carcinogenesis_from_driver(unsigned int & ith_clone, unsi
 
 	std::string cloneName = "";	
 	
-	int Parent_Generation_ID_Counter = (int) Tumour -> at( ith_clone ) ->Generation_ID_Counter;
+	int Parent_Generation_ID_Counter = (int) Tumour -> at( ith_clone ) -> Generation_ID_Counter;
 	Generate_Clone_Generation_ID(cloneName, 
 								 Parent_Generation_ID_Counter, 
 								 Tumour -> at( ith_clone ) -> Generation_ID,
@@ -156,12 +200,34 @@ void Clonal_Expansion::carcinogenesis_from_driver(unsigned int & ith_clone, unsi
 	Tumour -> back() -> clone_extinct = false;
 	Tumour -> back() -> Generation_ID_Counter = 0;
 	Tumour -> back() -> Mutation_Rate = r.Uniform_Mutation_Rate_2(mr);
+	Tumour -> back() -> P_Expansion[2] = Tumour -> back() -> Mutation_Rate;
 	double PR = r.Update_Proliferation_Rate(pr);
 	Tumour -> back() -> Driver_10_fold_accumulation = AC + 5;
 	Tumour -> back() -> P_Expansion[1] =  PR;
 	Tumour -> back() -> init_PR = PR;
 	Tumour -> back() -> max_PR = PR;
 	Tumour -> back() -> Number_of_Memebers_to_Start_Heterogeneity = 1;
+
+	Tumour -> back() -> G0_cells = 0;
+	std::get<P_STAYING>( Tumour -> back() -> G0_status ) = 0.20;
+	std::get<P_DYING>( Tumour -> back() -> G0_status ) = 0.1000;
+
+	Tumour -> back() -> G1_cells = 1;
+	std::get<P_STAYING_G1>( Tumour -> back() -> G1_status ) = 0.20;
+	std::get<P_DYING_G1>( Tumour -> back() -> G1_status ) = 0.0000;
+
+	 Tumour -> back() -> G2_cells = 0;
+	 std::get<P_STAYING>( Tumour -> back() -> G2_status ) = 0.20;
+	 std::get<P_DYING>( Tumour -> back() -> G2_status ) = 0.0000;
+
+
+	 Tumour -> back() -> S_cells = 0;
+	 std::get<P_STAYING>( Tumour -> back() -> S_status ) = 0.20;
+	 std::get<P_DYING>( Tumour -> back() -> S_status ) = 0.0000;
+
+	 Tumour -> back() -> M_cells = 0;
+	 std::get<P_STAYING>( Tumour -> back() -> M_status ) = 0.20;
+	 std::get<P_DYING>( Tumour -> back() -> M_status ) = 0.0000;
 	
 
 	Population_Size++;
@@ -366,7 +432,7 @@ void Clonal_Expansion::Estimate_Mutational_Effects(unsigned int & Mutant_Cells, 
 }
 
 
-void Clonal_Expansion::Check_for_Clonal_Extintion_at_min_size(unsigned int & ith_clone)
+void Clonal_Expansion::Check_for_Clonal_Extintion_at_min_size(const unsigned int & ith_clone)
 {
 
 	if( Tumour -> at(ith_clone) -> Clone_Size == 1 )
@@ -379,14 +445,15 @@ void Clonal_Expansion::Check_for_Clonal_Extintion_at_min_size(unsigned int & ith
 
 
 
-unsigned int * Clonal_Expansion::Update_Clonal_Mutational_Burden(unsigned int & ith_clone, unsigned int & Mutant_cells, unsigned int & years, unsigned int & hours )
+void Clonal_Expansion::Update_Clonal_Mutational_Burden(const unsigned int & ith_clone, const unsigned int & Mutant_cells, const unsigned int & years, const unsigned int & hours, std::vector<unsigned int> & Mutations, Random & r )
 {
-	Random r;
+	
 	unsigned int * mutational_effect_buffer;
 	unsigned int counter = 0;
 	unsigned int death = 0;
 	double effect_gain = static_cast<double>( Tumour -> at(ith_clone) -> P_Expansion[P_Expansion_PR] );
 	bool mut_effect_flag = false;
+	
 
 	unsigned int j = 0;
 
@@ -399,10 +466,10 @@ unsigned int * Clonal_Expansion::Update_Clonal_Mutational_Burden(unsigned int & 
 			// check for mutations
 			mutational_effect_buffer = r.Mutational_Effects();
 			// buffer is size 3 --> need to check kills drivers and effects
-			
+			std::cout << "P(Ki) = " << KILLER_PROBABILITY << "; P(Dr) = " << DRIVER_PROBABILITY << " ; P(P) =  " << 1.0 -(KILLER_PROBABILITY+DRIVER_PROBABILITY) << " [ " << i << " cells]:  "<< " KILL = " <<  mutational_effect_buffer[0] << " DR = " <<  mutational_effect_buffer[1] << " PASS= " << mutational_effect_buffer[2] << std::endl;
 			if ( mutational_effect_buffer[PASSENGER_CELLS] > 0 )// Passenger
 			{
-			 	//std::cout << " MUTATIONAL EFFECT " << std::endl; 
+			 	std::cout << " MUTATIONAL EFFECT " << std::endl; 
 			 	unsigned int CS = static_cast<unsigned int>(Tumour -> at(ith_clone) -> Clone_Size);
 			 	// std::cout << "Before Expansion " 
 			 	// 		  << Tumour -> at(ith_clone) -> P_Expansion[1] << " " 
@@ -415,21 +482,24 @@ unsigned int * Clonal_Expansion::Update_Clonal_Mutational_Burden(unsigned int & 
 			 	// 		  << Tumour -> at(ith_clone) -> Clone_Size << std::endl;
 
 			 	counter++;
-			 	
+			 	//getchar();
+
 			 	//mut_effect_flag = true;
 
 			}
 			else if(mutational_effect_buffer[DRIVER_CELLS] > 0)// Driver
 			{
 				std::cout << " DRIVER " << std::endl;
-				//carcinogenesis_from_driver( ith_clone,  years,  hours );
-
+				carcinogenesis_from_driver( ith_clone,  years,  hours, r );
+				
+				//getchar();
 			}
-			else 
+			else if(mutational_effect_buffer[0] > 0)
 			{
-				//std::cout << " DEATH " << std::endl;
+				std::cout << " DEATH " << std::endl;
 				Check_for_Clonal_Extintion_at_min_size( ith_clone );
 				death++;
+				//getchar();
 				// if(Tumour -> at(ith_clone) -> clone_extinct)
 				// 	break;
 			}
@@ -446,38 +516,134 @@ unsigned int * Clonal_Expansion::Update_Clonal_Mutational_Burden(unsigned int & 
 	effect_gain = fabs(effect_gain);
 
 
-	unsigned int MCC = Mutant_cells ;
-
-	unsigned int * Mutations;
-
+	//unsigned int MCC = Mutant_cells ;
 	
 	//Mutations[0] = 0; Mutations[1] = 0; Mutations[2] = 0;
 
-	if (!Tumour -> at(ith_clone) -> clone_extinct )
-	{
+	//if (!Tumour -> at(ith_clone) -> clone_extinct )
+	//{
 
-		Mutations = r.Mutational_Proportions( effect_gain, Tumour -> at(ith_clone) -> P_Expansion[P_Expansion_PR] , MCC );
+		//Mutations = 
+		r.Mutational_Proportions( effect_gain, Tumour -> at(ith_clone) -> P_Expansion[P_Expansion_PR] , Mutant_cells, Mutations );
 	
-	}
+	//}
 	
 
-	std::cout << "Values Muts: " << "Muts(G0) " << Mutations[MUTANTS_to_G0]
-				  << "  Muts(G1) " << Mutations[MUTANTS_to_G1]
-				  << " Muts(IDLE) " << Mutations[MUTANTS_to_IDLE]
-				  << " Muts (Death) " << death 
-				  << " Mutant cells "<< MCC 
-				  << " effect gain " <<  effect_gain << std::endl;
+	std::cout << "[ Muts  =  " << Mutant_cells<< " ] "
+							 << "P(G0) = "  << effect_gain
+							 << " ; P(G1) = " << Tumour -> at(ith_clone) -> P_Expansion[P_Expansion_PR]
+							 << " ; P(I) = " << 1.0 -(effect_gain + Tumour -> at(ith_clone) -> P_Expansion[P_Expansion_PR])
+							 << " ; to G0 = " << Mutations[0]
+							 << " ; to G1 = " << Mutations[1]
+							 << " ; IDLE  = " << Mutations[2]
+							 << " ; Deaths = " << death << std::endl;
+
+	// std::cout << "Values Muts: " << "Muts(G0) " << Mutations[MUTANTS_to_G0]
+	// 			  << "  Muts(G1) " << Mutations[MUTANTS_to_G1]
+	// 			  << " Muts(IDLE) " << Mutations[MUTANTS_to_IDLE]
+	// 			  << " Muts (Death) " << death 
+	// 			  << " Mutant cells "<< Mutant_cells 
+	// 			  << " effect gain " <<  effect_gain << std::endl;
 
 
 
-	return Mutations;
+	
 
 }
 
-void Clonal_Expansion::Probabilities_of_Cell_Division (unsigned int & ith_clone, double & p_idle, double & p_go_to_G0 )
+void Clonal_Expansion::Probabilities_of_Cell_Division (const unsigned int & ith_clone, double & p_idle, double & p_go_to_G0 )
 {
-	p_idle = 1.0 - Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_PR];
 	p_go_to_G0 = fabs( Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_PR] - Tumour -> at( ith_clone ) -> max_PR);
+	p_idle = 0.92 * (1.0 - ( Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR] + p_go_to_G0 ) );
+	
+
+}
+
+
+void Clonal_Expansion::Complementary_Probability( double & comp_probability_G0, 
+												  double & comp_probability_G1, 
+												  double & comp_probability_G2,
+												  double & comp_probability_S,
+												  double & comp_probability_M,
+												  const unsigned int & ith_clone )
+{
+
+	comp_probability_G0 = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status ) + std::get<P_DYING>( Tumour -> at( ith_clone ) -> G0_status ) ); 
+	comp_probability_G1 = 1.0 - ( std::get<P_STAYING_G1>( Tumour -> at( ith_clone ) -> G1_status ) + std::get<P_DYING_G1>( Tumour -> at( ith_clone ) -> G1_status ) ) - 0.1;
+	comp_probability_G2 = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status ) + std::get<P_DYING>( Tumour -> at( ith_clone ) -> G2_status ) );
+	comp_probability_S  = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status )  + std::get<P_DYING>( Tumour -> at( ith_clone ) -> S_status ) );
+	comp_probability_M  = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> M_status )  + std::get<P_DYING>( Tumour -> at( ith_clone ) -> M_status ) );
+
+}
+
+
+// Update G0
+void Clonal_Expansion::Update_G0_Phase( const double & comp_probability_G0, const unsigned int & ith_clone, Random & r)
+{
+	unsigned int * G0_buffer = r.Update_G0_Phase( Tumour -> at( ith_clone ) -> G0_cells, 
+	 							std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status ), 
+	 							std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> G0_status ),
+	 							comp_probability_G0);
+
+	std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G0_status ) = G0_buffer[STAY];// Stay
+	std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> G0_status ) = G0_buffer[DIE];// Die 
+	std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G0_status ) = G0_buffer[NEXT_STAGE];// to G1
+}
+
+//Update G1
+void Clonal_Expansion::Update_G1_Phase(const double & comp_probability_G1, const unsigned int & ith_clone, Random & r)
+{
+	
+	unsigned int * G1_buffer = r.Update_G1_Phase( Tumour -> at( ith_clone ) -> G1_cells,
+	 							std::get<P_STAYING_G1> ( Tumour -> at( ith_clone ) -> G1_status ),
+	 							std::get<P_DYING_G1>   ( Tumour -> at( ith_clone ) -> G1_status),
+	 							comp_probability_G1);
+
+	std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[STAY];// Stay
+	std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[DIE];// to Dying
+	std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[NEXT_STAGE];// to G2
+	std::get<FROM_G1_TO_G0>( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[REVERT_TO_G0];// to G0
+}
+
+// Update G2
+void Clonal_Expansion::Update_G2_Phase( const double & comp_probability_G2, const unsigned int & ith_clone, Random & r)
+{
+	unsigned int * G2_buffer = r.Update_G2_Phase( Tumour -> at( ith_clone ) -> G2_cells,
+	  							   std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status ),
+	  							   std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> G2_status ),
+	  							   comp_probability_G2 );
+
+	std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G2_status ) = G2_buffer[STAY];// Stay
+	std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> G2_status ) = G2_buffer[DIE];// to Dying
+	std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G2_status ) = G2_buffer[NEXT_STAGE];
+}
+
+//Update S
+void Clonal_Expansion::Update_S_Phase( const double & comp_probability_S, const unsigned int & ith_clone, Random & r)
+{
+	unsigned int *  S_buffer = r.Update_S_Phase( Tumour -> at( ith_clone ) -> S_cells,
+	  							std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status ),
+	  							std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> S_status ),
+	  							comp_probability_S );
+
+	std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> S_status ) = S_buffer[STAY];// Stay
+	std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> S_status ) = S_buffer[DIE];// die
+	std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> S_status ) = S_buffer[NEXT_STAGE];// to M
+
+}
+
+//Update M
+
+void Clonal_Expansion::Update_M_Phase( const double & comp_probability_M, const unsigned int & ith_clone, Random & r)
+{
+	unsigned int *  M_buffer = r.Update_M_Phase( Tumour -> at( ith_clone ) -> M_cells,
+	  							 std::get<P_STAYING>( Tumour -> at( ith_clone ) -> M_status),
+	  							 std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> M_status ),
+	  							 comp_probability_M );
+
+	 std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) = M_buffer[STAY];// Stay
+	 std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> M_status ) = M_buffer[DIE];// Dy
+	 std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) = M_buffer[NEXT_STAGE];// to Division Model
 }
 
 
@@ -485,81 +651,131 @@ void Clonal_Expansion::Probabilities_of_Cell_Division (unsigned int & ith_clone,
 //This can run in parallel 
 // Mitosis
 // https://www.youtube.com/watch?v=koudmJdil60
-void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, unsigned int & years, unsigned int & hours)
+void Clonal_Expansion::Check_Mitosis_Network_Status(const unsigned int & ith_clone, const unsigned int & years, const unsigned int & hours, Random & r )
 {
 	// All of this runs
-	Random r;
+	//Random r;
 	
 
-	// // for G0
-	double comp_probability_G0 = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status ) + std::get<P_DYING>( Tumour -> at( ith_clone ) -> G0_status ) ); 
-	double comp_probability_G1 = 1.0 - ( std::get<P_STAYING_G1>( Tumour -> at( ith_clone ) -> G1_status ) + std::get<P_DYING_G1>( Tumour -> at( ith_clone ) -> G1_status ) ) - 0.1;
-	double comp_probability_G2 = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status ) + std::get<P_DYING>( Tumour -> at( ith_clone ) -> G2_status ) );
-	double comp_probability_S  = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status )  + std::get<P_DYING>( Tumour -> at( ith_clone ) -> S_status ) );
-	double comp_probability_M  = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> M_status )  + std::get<P_DYING>( Tumour -> at( ith_clone ) -> M_status ) );
+
+	double comp_probability_G0 = 0;
+	double comp_probability_G1 = 0;
+	double comp_probability_G2 = 0;
+	double comp_probability_S = 0;
+	double comp_probability_M = 0;
+	double p_idle = 0.0;
+	double p_go_to_G0 = 0.0;
+
+	std::vector<unsigned int> Division_Model;
+
+	//std::vector<unsigned int> Division_Model = 
+
+	//unsigned int * Mutations;
+
+	std::vector<unsigned int> Mutations;
+
+	Complementary_Probability( comp_probability_G0, 
+							   comp_probability_G1, 
+							   comp_probability_G2,
+							   comp_probability_S,
+							   comp_probability_M,
+							   ith_clone );
+
+	// // // for G0
+	// // double comp_probability_G0 = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status ) + std::get<P_DYING>( Tumour -> at( ith_clone ) -> G0_status ) ); 
+	// // double comp_probability_G1 = 1.0 - ( std::get<P_STAYING_G1>( Tumour -> at( ith_clone ) -> G1_status ) + std::get<P_DYING_G1>( Tumour -> at( ith_clone ) -> G1_status ) ) - 0.1;
+	// // double comp_probability_G2 = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status ) + std::get<P_DYING>( Tumour -> at( ith_clone ) -> G2_status ) );
+	// // double comp_probability_S  = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status )  + std::get<P_DYING>( Tumour -> at( ith_clone ) -> S_status ) );
+	// // double comp_probability_M  = 1.0 - ( std::get<P_STAYING>( Tumour -> at( ith_clone ) -> M_status )  + std::get<P_DYING>( Tumour -> at( ith_clone ) -> M_status ) );
 	
-	std::cout << "STATS G0 >  " <<  Tumour -> at( ith_clone ) -> G0_cells << std::endl;
+	// std::cout << "STATS G0 >  " <<  Tumour -> at( ith_clone ) -> G0_cells << std::endl;
 
-	 unsigned int * G0_buffer = r.Update_G0_Phase( Tumour -> at( ith_clone ) -> G0_cells, 
-	 							  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status ), 
-	 							  std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> G0_status ),
-	 							  comp_probability_G0);
+	 Update_G0_Phase( comp_probability_G0, ith_clone, r );
+	 Update_G1_Phase( comp_probability_G1, ith_clone, r );
+	 Update_G2_Phase( comp_probability_G2, ith_clone, r );
+	 Update_S_Phase(  comp_probability_S,  ith_clone, r );
+	 Update_M_Phase(  comp_probability_M, ith_clone, r );
 
-	 unsigned int * G1_buffer = r.Update_G1_Phase( Tumour -> at( ith_clone ) -> G1_cells,
-	 							   std::get<P_STAYING_G1> ( Tumour -> at( ith_clone ) -> G1_status ),
-	 							   std::get<P_DYING_G1>   ( Tumour -> at( ith_clone ) -> G1_status),
-	 							   comp_probability_G1);
-
-	  unsigned int * G2_buffer = r.Update_G2_Phase( Tumour -> at( ith_clone ) -> G2_cells,
-	  							   std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status ),
-	  							   std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> G2_status ),
-	  							   comp_probability_G2 );
-
-	  unsigned int *  S_buffer = r.Update_S_Phase( Tumour -> at( ith_clone ) -> S_cells,
-	  							  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status ),
-	  							  std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> S_status ),
-	  							  comp_probability_S );
-
-	 unsigned int *  M_buffer = r.Update_M_Phase( Tumour -> at( ith_clone ) -> M_cells,
-	  							 std::get<P_STAYING>( Tumour -> at( ith_clone ) -> M_status),
-	  							 std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> M_status ),
-	  							 comp_probability_M );
-
-
-	 // TODO Change this
-	 //double to_G0 = 0.001; // probability of expoansion 
 	 unsigned int AC_at_t = Tumour -> at( ith_clone ) -> Available_cells;
 	 unsigned int * Clonal_update_buffer = r.Clonal_Functions( Tumour -> at( ith_clone ) -> Available_cells,
-	  									   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_QR],
-	  									   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_PR], 
-	  									   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_DR] ) ;
+	   									   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_QR],
+	   									   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_PR] - feedback, 
+	   									   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_DR] ) ;
+	
+	 Probabilities_of_Cell_Division ( ith_clone, p_idle, p_go_to_G0 );
+
+	 r.Newborn( std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status ), 
+	 										   p_idle, 
+	 										   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR],
+	 										   p_go_to_G0,
+	 										   Division_Model
+	 										  );
+
+	 
 
 	
 
-	// //for G0
-	std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G0_status ) = G0_buffer[STAY];// Stay
-	std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> G0_status ) = G0_buffer[DIE];// Die 
-	std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G0_status ) = G0_buffer[NEXT_STAGE];// to G1
 
-	std::cout << "ASSIGN G0 >  " <<  Tumour -> at( ith_clone ) -> G0_cells << std::endl;
+	//  // unsigned int * G0_buffer = r.Update_G0_Phase( Tumour -> at( ith_clone ) -> G0_cells, 
+	//  // 							  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status ), 
+	//  // 							  std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> G0_status ),
+	//  // 							  comp_probability_G0);
 
-	//for G1
-	std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[STAY];// Stay
-	std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[DIE];// to Dying
-	std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[NEXT_STAGE];// to G2
-	std::get<FROM_G1_TO_G0>( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[REVERT_TO_G0];// to G0
-	//for G2
-	 std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G2_status ) = G2_buffer[STAY];// Stay
-	 std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> G2_status ) = G2_buffer[DIE];// to Dying
-	 std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G2_status ) = G2_buffer[NEXT_STAGE];
-	// //for S
-	 std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> S_status ) = S_buffer[STAY];// Stay
-	 std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> S_status ) = S_buffer[DIE];// die
-	 std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> S_status ) = S_buffer[NEXT_STAGE];// to M
-	// //for M
-	 std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) = M_buffer[STAY];// Stay
-	 std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> M_status ) = M_buffer[DIE];// Dy
-	 std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) = M_buffer[NEXT_STAGE];// to Division Model
+	//  // unsigned int * G1_buffer = r.Update_G1_Phase( Tumour -> at( ith_clone ) -> G1_cells,
+	//  // 							   std::get<P_STAYING_G1> ( Tumour -> at( ith_clone ) -> G1_status ),
+	//  // 							   std::get<P_DYING_G1>   ( Tumour -> at( ith_clone ) -> G1_status),
+	//  // 							   comp_probability_G1);
+
+	//   // unsigned int * G2_buffer = r.Update_G2_Phase( Tumour -> at( ith_clone ) -> G2_cells,
+	//   // 							   std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status ),
+	//   // 							   std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> G2_status ),
+	//   // 							   comp_probability_G2 );
+
+	//   // unsigned int *  S_buffer = r.Update_S_Phase( Tumour -> at( ith_clone ) -> S_cells,
+	//   // 							  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status ),
+	//   // 							  std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> S_status ),
+	//   // 							  comp_probability_S );
+
+	//  // unsigned int *  M_buffer = r.Update_M_Phase( Tumour -> at( ith_clone ) -> M_cells,
+	//  //  							 std::get<P_STAYING>( Tumour -> at( ith_clone ) -> M_status),
+	//  //  							 std::get<P_DYING>  ( Tumour -> at( ith_clone ) -> M_status ),
+	//  //  							 comp_probability_M );
+
+
+	//  // TODO Change this
+	//  //double to_G0 = 0.001; // probability of expoansion 
+	//  // unsigned int AC_at_t = Tumour -> at( ith_clone ) -> Available_cells;
+	//  // unsigned int * Clonal_update_buffer = r.Clonal_Functions( Tumour -> at( ith_clone ) -> Available_cells,
+	//  //  									   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_QR],
+	//  //  									   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_PR], 
+	//  //  									   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_DR] ) ;
+
+	
+
+	// // //for G0
+	// // std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G0_status ) = G0_buffer[STAY];// Stay
+	// // std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> G0_status ) = G0_buffer[DIE];// Die 
+	// // std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G0_status ) = G0_buffer[NEXT_STAGE];// to G1
+
+	// std::cout << "ASSIGN G0 >  " <<  Tumour -> at( ith_clone ) -> G0_cells << std::endl;
+
+	// //for G1
+	// // std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[STAY];// Stay
+	// // std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[DIE];// to Dying
+	// // std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[NEXT_STAGE];// to G2
+	// // std::get<FROM_G1_TO_G0>( Tumour -> at( ith_clone ) -> G1_status ) = G1_buffer[REVERT_TO_G0];// to G0
+	// //for G2
+	//  // std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G2_status ) = G2_buffer[STAY];// Stay
+	//  // std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> G2_status ) = G2_buffer[DIE];// to Dying
+	//  // std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G2_status ) = G2_buffer[NEXT_STAGE];
+	// // //for S
+	//  // std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> S_status ) = S_buffer[STAY];// Stay
+	//  // std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> S_status ) = S_buffer[DIE];// die
+	//  // std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> S_status ) = S_buffer[NEXT_STAGE];// to M
+	// // //for M
+	//  // std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) = M_buffer[STAY];// Stay
+	//  // std::get<DYING_CELLS>  ( Tumour -> at( ith_clone ) -> M_status ) = M_buffer[DIE];// Dy
+	//  // std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) = M_buffer[NEXT_STAGE];// to Division Model
 
 	
 	std::cout << "[ G0 =   " << Tumour -> at( ith_clone ) -> G0_cells << " ] "
@@ -606,8 +822,22 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, un
 						  << " ; M(Tr) =  " << std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) << std::endl;
 
 
+	std::cout << "[ DV = " << std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) << " ] "
+			  << "; PDiv(Idle) = "   << p_idle 
+			  << "; P(G0) = " << p_go_to_G0
+			  << " ; P(MR) = "       <<  Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR]
+			  << " ; P(G1) = " 		<< 1.0 - ( p_idle + p_go_to_G0 + Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR])
+			  << " : sum = " << ( 1.0 - ( p_idle + p_go_to_G0 + Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR])) + ( p_idle + p_go_to_G0 + Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR])
+			  << " ; Idling = "   <<  Division_Model[DIV_CELLS_IDLING]
+			  << " ; Muts = "     << Division_Model[DIV_CELLS_MUTATING]
+			  << " ; To G0 = "    << Division_Model[DIV_CELLS_to_G0]
+			  << " ; To G1 = "    << Division_Model[DIV_CELLS_to_G1]
+			  << std::endl;
+
+
 	std::cout << "[ AC(t) = " << AC_at_t << " ] => "
 							   << " ; PR = " << Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_PR]
+							   << " ; penalty = " << feedback
 							   << " ; DR = " << Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_DR]
 							   << " ; QR = " << Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_QR]
 	 						   << " ; Idling = " <<  Clonal_update_buffer[AV_CELLS_IDLING]
@@ -617,23 +847,12 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, un
 
 	
 
-	double p_idle = 0.0;
-	double p_go_to_G0 = 0.0;
-	Probabilities_of_Cell_Division (ith_clone, p_idle, p_go_to_G0 );
-	//Send this as part of the model and then soft  max 
-	unsigned int * Division_Model = r.Newborn( std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status ), 
-											   p_idle, 
-											   Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR],
-											   p_go_to_G0 
-											  );
-	std::cout << "[ DV = " << std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status ) << " ] "
-			  << "; PDiv(Idle) = "   << p_idle 
-			  << " ; MR = "       <<  Tumour -> at( ith_clone ) -> P_Expansion[P_Expansion_MR]
-			  << " ; Idling = "   <<  Division_Model[DIV_CELLS_IDLING]
-			  << " ; Muts = "     << Division_Model[DIV_CELLS_MUTATING]
-			  << " ; To G0 = "    << Division_Model[DIV_CELLS_to_G0]
-			  << " ; To G1 = "    << Division_Model[DIV_CELLS_to_G1]
-			  << std::endl;
+	
+	
+	// //Send this as part of the model and then soft  max 
+	
+
+	
 
 	//std::cout << "[ DV = " << std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> M_status << " ] "
 					    //    << "PDiv(Idle): "   << p_idle 
@@ -646,23 +865,25 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, un
 						   //<< std::endl;
 
 
-	// //update mutations
-	// unsigned int Mutant_cells = 10; 
-	// //Estimate_Mutational_Effects( Mutant_cells, ith_clone -> Clone_Size );
-	unsigned int * Mutations = Update_Clonal_Mutational_Burden( ith_clone, Division_Model[DIV_CELLS_MUTATING], years, hours );
+	// // //update mutations
+	// // unsigned int Mutant_cells = 10; 
+	// // //Estimate_Mutational_Effects( Mutant_cells, ith_clone -> Clone_Size );
 
-	if (!Tumour -> at(ith_clone) -> clone_extinct )
-	{
-		std::cout << "VALID BUFFER " << std::endl; 
-	}
 
-	//
-	// UPDATE Values
-	//
+
+	
+	//if( Division_Model[DIV_CELLS_MUTATING] >  0)
+	//{
+	 	Update_Clonal_Mutational_Burden( ith_clone, Division_Model[DIV_CELLS_MUTATING], years, hours, Mutations, r );
+	//}
+
+	// //
+	// // UPDATE Values
+	// //
 
 	std::cout << " G0(t) = " <<  Tumour -> at( ith_clone ) -> G0_cells << " to ";
 
-	Tumour -> at( ith_clone ) -> G0_cells = std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status ) + 
+	Tumour -> at( ith_clone ) -> G0_cells = std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G0_status ) + 
 											std::get<FROM_G1_TO_G0>( Tumour -> at( ith_clone ) -> G1_status ) + 
 											Division_Model[DIV_CELLS_to_G0] + 
 											Mutations[MUTANTS_to_G0] + 
@@ -673,7 +894,7 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, un
 	std::cout << " G1(t) = " <<  Tumour -> at( ith_clone ) -> G1_cells << " to "  ;
 
 	Tumour -> at ( ith_clone ) -> G1_cells =  std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G0_status ) + 
-											  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G1_status ) + 
+											  std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G1_status ) + 
 											  Division_Model[DIV_CELLS_to_G1] + 
 											  Clonal_update_buffer[AV_CELLS_to_G1] + 
 											  Mutations[MUTANTS_to_G1] ;
@@ -682,14 +903,14 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, un
 
 	std::cout << " S(t) = " <<  Tumour -> at( ith_clone ) -> S_cells  << " to ";
 
-	Tumour -> at ( ith_clone ) -> S_cells = std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status )  +
+	Tumour -> at ( ith_clone ) -> S_cells = std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> S_status )  +
 											std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> G1_status ) ;
 
 	std::cout << " S(t + dt) = " <<  Tumour -> at( ith_clone ) -> S_cells  << std::endl;
 
 	std::cout << " G2(t) = " <<  Tumour -> at( ith_clone ) -> G2_cells  << " to " ;
 
-	Tumour -> at ( ith_clone ) -> G2_cells = std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status ) +
+	Tumour -> at ( ith_clone ) -> G2_cells = std::get<STAYING_CELLS>( Tumour -> at( ith_clone ) -> G2_status ) +
 											 std::get<EXITING_CELLS>( Tumour -> at( ith_clone ) -> S_status ) ;
 
 	std::cout << " G2(t + dt) = " <<  Tumour -> at( ith_clone ) -> G2_cells  << std::endl;
@@ -709,49 +930,37 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(unsigned int & ith_clone, un
 
 	std::cout << " AC(t + dt) = " <<  Tumour -> at( ith_clone ) -> Available_cells  << std::endl;
 
+	Tumour -> at( ith_clone ) -> Clone_Size = static_cast<unsigned long long int>(Tumour -> at(ith_clone) -> Available_cells + 
+	 																			  Tumour -> at(ith_clone) -> G0_cells        + 
+	 																			  Tumour -> at(ith_clone) -> G1_cells        + 
+	 																			  Tumour -> at(ith_clone) -> G2_cells        + 
+	 																			  Tumour -> at(ith_clone) -> S_cells         + 
+	 																			  Tumour -> at(ith_clone) -> M_cells);
+
+	std::cout << " Clone_S( " <<  ith_clone << " ) = "<< Tumour -> at( ith_clone ) -> Clone_Size  << std::endl;
 	
 }
 
 
-void Clonal_Expansion::Grow_A_Tumour()
+void Clonal_Expansion::map_Feedback(  )
 {
-	// unsigned int seconds = 0;
-	// unsigned int hours = 0;
-	// unsigned int years = 0;
-	// unsigned int elapsed_hours = 0;
-	// unsigned int times_to_wait = 0;
-	// unsigned int ith_clone = 0; 
 
-	// for( ;; )
-	// {
-	// 	std::cout << "WHILE IN G0 >  " <<  Tumour -> at( 0 ) -> G0_cells << std::endl;
+	feedback =  0.0 + (DIFF - 0.0) * (( (double) Population_Size - 0.0) / ((double) PS - 0.0));	
+	//std::cout << "Population Feedback " << feedback << " = " << DIFF << " * " << Population_Size << " / " << PS << std::endl;
+}
 
-	// 	//seconds += dt;
-	// 	//if(seconds == 3600)
-	// 	//{
-	// 		//seconds = 0; hours ++;
-	// 		//unsigned int size = getSize();
-	// 		for (ith_clone = 0; ith_clone < Tumour -> size() ; ith_clone++) 			//(1) Is my clone not extinct?	tmr -> Tumour -> size()
-	// 		{	
-	// 			std::cout << "LOOP IN G0 >  " <<  Tumour -> at( ith_clone ) -> G0_cells << std::endl;
-	// 			Check_Mitosis_Network_Status( ith_clone, years, hours ) ;
-	// 			std::cout << "LOOP OUT G0 >  " <<  Tumour -> at( ith_clone ) -> G0_cells << std::endl;
-	// 			std::cout << "\n\n" << std::endl;
-	// 			getchar();
-	// 		}
 
-	// 	//}
+void Clonal_Expansion::Update_Tumour_Size()
+{
+	unsigned int ith_clone = 0;
+	unsigned long long int population = 0;
+	for (ith_clone = 0; ith_clone < Tumour -> size() ; ith_clone++) 
+	{
+		population += Tumour -> at(ith_clone) -> Clone_Size;
+	}
+	Population_Size = population;
 
-	// 	std::cout << "WHILE OUT G0 >  " <<   Tumour -> at( 0 ) -> G0_cells << std::endl;
-	// 	std::cout << "\n\n" << std::endl;
-	// 	//if(hours == 8764)//8764
-	// 	//{
-	// 	//	hours = 0; years ++;
-			
-	// 	//}
-
-	// }
-	std::cout << " " << std::endl;
+	std::cout << "Tumour SIZE = " <<  Population_Size << std::endl;
 }
 
 

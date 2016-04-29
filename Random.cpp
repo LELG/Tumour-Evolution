@@ -24,6 +24,7 @@
 #include <math.h>
 #include <iostream>         // std::cout,std::endl
 #include <fstream>
+#include <vector>
 
 Random::Random()
 {}
@@ -171,7 +172,7 @@ unsigned int *  Random::Newborn_G0_and_G1( unsigned long long int &Newborn_cells
 	G0{G0->.,i}(t) is the number of cells that are exiting G0 Phase
 
 ****************************************************************************/
-unsigned int * Random::Update_G0_Phase(unsigned int &G0_cells, double & p_staying_G0, double & p_dying_in_G0, double & p_exiting_G0)
+unsigned int * Random::Update_G0_Phase(const unsigned int &G0_cells, const double & p_staying_G0, const double & p_dying_in_G0, const double & p_exiting_G0)
 {
 	static unsigned int buffer[3] = {0, 0, 0};
 	double p_vector[] = {p_staying_G0, p_dying_in_G0, p_exiting_G0};
@@ -198,7 +199,7 @@ unsigned int * Random::Update_G0_Phase(unsigned int &G0_cells, double & p_stayin
 	G1{G1->.,i}(t) is the number of cells exiting G1 phase
 
 ****************************************************************************/
-unsigned int * Random::Update_G1_Phase(unsigned int & G1_cells, double & p_staying_G1, double & p_dying_in_G1, double & p_exiting_G1)
+unsigned int * Random::Update_G1_Phase(const unsigned int & G1_cells, const double & p_staying_G1, const double & p_dying_in_G1, const double & p_exiting_G1)
 {
 	static unsigned int buffer[4] = {0, 0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
 	double p_vector[] = { p_staying_G1, p_dying_in_G1, p_exiting_G1, 1.0 - (p_staying_G1 + p_dying_in_G1 + p_exiting_G1) };
@@ -224,7 +225,7 @@ unsigned int * Random::Update_G1_Phase(unsigned int & G1_cells, double & p_stayi
 	G2{G2->.,i}(t) is the number of cells exiting G2 phase
 
 ****************************************************************************/
-unsigned int * Random::Update_G2_Phase(unsigned int & G2_cells, double & p_staying_G2, double & p_dying_in_G2, double & p_exiting_G2)
+unsigned int * Random::Update_G2_Phase(const unsigned int & G2_cells, const double & p_staying_G2, const double & p_dying_in_G2, const double & p_exiting_G2)
 {
 	static unsigned int buffer[3] = {0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
 	double p_vector[] = { p_staying_G2, p_dying_in_G2, p_exiting_G2 };
@@ -250,7 +251,7 @@ unsigned int * Random::Update_G2_Phase(unsigned int & G2_cells, double & p_stayi
 	S{M->.,i}(t) is the number of cells exiting S phase
 
 ****************************************************************************/
-unsigned int * Random::Update_S_Phase(unsigned int & S_cells, double & p_staying_S, double & p_dying_S, double & p_exiting_S)
+unsigned int * Random::Update_S_Phase(const unsigned int & S_cells, const double & p_staying_S, const double & p_dying_S, const double & p_exiting_S)
 {
 	static unsigned int buffer[3] = {0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
 	double p_vector[] = { p_staying_S, p_dying_S, p_exiting_S };
@@ -276,7 +277,7 @@ unsigned int * Random::Update_S_Phase(unsigned int & S_cells, double & p_staying
 	M{EXIT->.,i}(t) is the number of cells exiting M phase
 
 ****************************************************************************/
-unsigned int * Random::Update_M_Phase(unsigned int & M_cells, double & p_staying_M, double & p_dying_M, double & p_exiting_M)
+unsigned int * Random::Update_M_Phase(const unsigned int & M_cells, const double & p_staying_M, const double & p_dying_M, const double & p_exiting_M)
 {
 	static unsigned int buffer[3] = {0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
 	double p_vector[] = { p_staying_M, p_dying_M, p_exiting_M };
@@ -292,7 +293,7 @@ unsigned int * Random::Update_M_Phase(unsigned int & M_cells, double & p_staying
 
 }
 
-unsigned int * Random::Clonal_Functions(unsigned int & Available_cells, double & p_of_going_G0, double & p_entering_mitosis, double & p_dying )
+unsigned int * Random::Clonal_Functions(const unsigned int & Available_cells, const double & p_of_going_G0, const double & p_entering_mitosis, const double & p_dying )
 {
 	static unsigned int buffer[4] = {0, 0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
 	double p_vector[] = { 1.0 - (p_of_going_G0 + p_entering_mitosis + p_dying ), p_dying, p_of_going_G0, p_entering_mitosis };
@@ -308,12 +309,18 @@ unsigned int * Random::Clonal_Functions(unsigned int & Available_cells, double &
 	return buffer;
 }
 
-unsigned int * Random::Newborn( unsigned int & Newborn_cells, double & p_idle, double & p_mutate, double & p_go_to_G0 )
+void Random::Newborn( const unsigned int & Newborn_cells, const  double & p_idle, const  double & p_mutate, const  double & p_go_to_G0, std::vector<unsigned int> & Division_Model)
 {
+
+	Division_Model.push_back(0);
+	Division_Model.push_back(0);
+	Division_Model.push_back(0);
+	Division_Model.push_back(0);
 
 	static unsigned int buffer[4] = {0, 0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
 	double p_vector[] = {p_idle, p_mutate, p_go_to_G0, 1.0 - (p_idle + p_mutate + p_go_to_G0) };
 	const size_t K_S = 4;
+
 
 	gsl_ran_multinomial ( r_global,
 						  K_S,
@@ -322,7 +329,12 @@ unsigned int * Random::Newborn( unsigned int & Newborn_cells, double & p_idle, d
 						  buffer
 						);
 
-	return buffer;
+	Division_Model[0] = buffer[0];
+	Division_Model[1] = buffer[1];
+	Division_Model[2] = buffer[2];
+	Division_Model[3] = buffer[3];
+
+
 
 }
 
@@ -367,8 +379,12 @@ void Random::Laplace(double & effect, unsigned int & Clone_size)
 	
 }
 
-unsigned int * Random::Mutational_Proportions( double & p_go_to_G0, double & p_go_to_G1, unsigned int & Mutant_Cells )
+void Random::Mutational_Proportions( const double & p_go_to_G0,const  double & p_go_to_G1, const unsigned int & Mutant_Cells, std::vector<unsigned int> & Mutations )
 {
+	Mutations.push_back(0);
+	Mutations.push_back(0);
+	Mutations.push_back(0);
+
 	static unsigned int buffer[3] = {0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
 	double p_vector[] = { p_go_to_G0, p_go_to_G1, 1.0 - ( p_go_to_G0 + p_go_to_G1 ) };
 	const size_t K_S = 3;
@@ -379,7 +395,13 @@ unsigned int * Random::Mutational_Proportions( double & p_go_to_G0, double & p_g
 						  p_vector,
 						  buffer
 						);
-	return buffer;
+
+	Mutations[0] = buffer[0];
+	Mutations[1] = buffer[1];
+	Mutations[2] = buffer[2];
+
+
+	
 }
 
 

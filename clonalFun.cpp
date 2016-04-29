@@ -196,10 +196,10 @@ void Basic_Clonal_Expansion(std::unique_ptr<Clonal_Expansion>  & tmr,
 }
 
 void Generate_Clone_Generation_ID(std::string & newGeneration_ID,
-								  int & Parent_Generation_ID_Counter, 
+								  const int & Parent_Generation_ID_Counter, 
 								  const std::string & Parent_ID, 
-								  unsigned int & years, 
-								  unsigned int & hours)
+								  const unsigned int & years, 
+								  const unsigned int & hours)
 {
 
 	std::string heredity_pattern = Parent_ID.substr( 0, Parent_ID.find("-") );
