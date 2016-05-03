@@ -31,25 +31,25 @@ int main(int argc, char**argv)
 	tmr -> Tumour -> at(0) -> Available_cells = 0;
 
 	tmr -> Tumour -> at(0) -> G0_cells = 0;
-	std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G0_status ) = 0.60;
+	std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G0_status ) = 0.70;
 	std::get<P_DYING>( tmr -> Tumour -> at(0) -> G0_status ) = 0.10;
 
-	tmr -> Tumour -> at(0) -> G1_cells = 1;
-	std::get<P_STAYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.60;
-	std::get<P_DYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.00;
+	tmr -> Tumour -> at(0) -> G1_cells = 100;
+	std::get<P_STAYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.70;
+	std::get<P_DYING_G1>( tmr -> Tumour -> at(0) -> G1_status ) = 0.016;
 
 	 tmr -> Tumour -> at(0) -> G2_cells = 0;
-	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.60;
-	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.00;
+	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.70;
+	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> G2_status ) = 0.016;
 
 
 	 tmr -> Tumour -> at(0) -> S_cells = 0;
-	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.60;
-	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.00;
+	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.70;
+	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> S_status ) = 0.016;
 
 	 tmr -> Tumour -> at(0) -> M_cells = 0;
-	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.60;
-	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.00;
+	 std::get<P_STAYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.70;
+	 std::get<P_DYING>( tmr -> Tumour -> at(0) -> M_status ) = 0.016;
 
 
 	 tmr -> Tumour -> at(0) -> Clone_Size = static_cast<unsigned long long int>(tmr -> Tumour -> at(0) -> Available_cells + 

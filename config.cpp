@@ -10,9 +10,9 @@
 #include <limits>
 
 //-1 MR for testing
-const double MUT_RATE           = 0.0001; //0.0000001
-const double DEATH_RATE         = 0.02;
-const double PROLIFERATION_RATE = 0.03;
+const double MUT_RATE           = 0.0000001; //0.0000001
+const double DEATH_RATE         = 0.0001;
+const double PROLIFERATION_RATE = 0.00015;
 
 const unsigned long long MAXIMUM_POPULATION_SIZE =  4000000000; //100000; //1000000000;
 const unsigned long long MAXIMUM_POPULATION_SIZE_TO_STOP =   MAXIMUM_POPULATION_SIZE + 1000; // + 2000000000;
