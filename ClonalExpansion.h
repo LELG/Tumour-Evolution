@@ -12,7 +12,7 @@
 #include <vector>
 #include "config.h"
 #include "Random.h"
-
+#include <tuple>
 class Clonal_Expansion
 {
 
@@ -30,6 +30,16 @@ public:
 		Binomial, 
 		Network
 	} mitosis;
+
+	enum Version
+	{
+		Tester = 0,
+		V1     = 1,
+		V2 	   = 2,
+		V2R    = 3,
+		V3 	   = 4,
+		VM     = 5
+	} Version;
 		
 		/**
 			This is the main Data Structure to store all clones, this will
@@ -54,6 +64,12 @@ public:
 	void carcinogenesis(void);
 	void carcinogenesis(unsigned long long int &neoplastic_cells);
 	std::string getMitosis_type(void);
+	std::string getVersion_type(void);
+	//void getMitosis_type(void);
+
+ 	void setVersion_type(const std::string & str_version);
+ 	void Select_Carcinogenesis();
+ 	void carcinogenesis_V1(void);
 
 	void Generate_Clone_Generation_ID( std::string & newGeneration_ID,
 								  const int & Parent_Generation_ID_Counter, 
@@ -62,17 +78,19 @@ public:
 								  const unsigned int & hours);
 
 
-	bool check_G1_phase(std::unique_ptr<Clone> const & ith_clone);
-	bool exiting_G1_phase(std::unique_ptr<Clone> const & ith_clone);
-	bool check_S_phase(std::unique_ptr<Clone> const & ith_clone);
-	bool exiting_S_phase(std::unique_ptr<Clone> const & ith_clone);
-	bool check_G2_phase(std::unique_ptr<Clone> const & ith_clone);
-	bool exiting_G2_phase(std::unique_ptr<Clone> const & ith_clone);
-	void Transition_From_G1_S(std::unique_ptr<Clone> const & ith_clone);
-	void Non_Mutagenic_Mitosis_Standard(std::unique_ptr<Clone> const & ith_clone);
-	void Transition_From_S_G2(std::unique_ptr<Clone> const & ith_clone);
-	void Transition_From_G2_M(std::unique_ptr<Clone> const & ith_clone);
-	void Update_Population_After_Division(std::unique_ptr<Clone> const & ith_clone);
+	bool check_G1_phase( const unsigned int & ith_clone);
+	bool exiting_G1_phase( const unsigned int & ith_clone);
+	bool check_S_phase(const unsigned int & ith_clone);
+	bool exiting_S_phase(const unsigned int & ith_clone);
+	bool check_G2_phase(const unsigned int & ith_clone);
+	bool exiting_G2_phase( const unsigned int & ith_clone);
+	void Transition_From_G1_S(const unsigned int  & ith_clone, Random & r);
+	//void Non_Mutagenic_Mitosis_Standard(std::unique_ptr<Clone>  & ith_clone);
+	void Non_Mutagenic_Mitosis_Standard_V1(const unsigned int & ith_clone, Random & r);
+	void Transition_From_S_G2(const unsigned int  & ith_clone, Random & r);
+	void Transition_From_G2_M(const unsigned int  & ith_clone, Random & r);
+	void Update_Population_After_Division_V1(const unsigned int  & ith_clone);
+	void Dealyed_Mitosis_V1(const unsigned int & ith_clone, Random & r, unsigned int & hours, unsigned int & years);
 	void Estimate_Mutational_Effects(unsigned int & Mutant_Cells, unsigned long long int & Clone_Size);
 	void Update_Clonal_Mutational_Burden(const unsigned int & ith_clone, const unsigned int & Mutant_cells, const unsigned int & years, const unsigned int & hours, std::vector<unsigned int> & Mutations, Random & r );
 	void carcinogenesis_from_driver(const unsigned int & ith_clone, const unsigned int & years, const unsigned int & hours, Random & r);
@@ -97,7 +115,12 @@ public:
 	
 	void Update_Tumour_Size();
 	void map_Feedback(  );
-
+	void Basic_Clonal_Expansion_V1(const unsigned int & ith_clone, std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn, Random & r);
+	void Reset_to_G1(const unsigned int & ith_clone);
+	void Valid_Size_Heterogeneity_V1(const unsigned int & ith_clone);
+	void Update_Population_V1(unsigned int & hours, unsigned int & years, Random & r);
+	void Compute_Tumour_Growth(const std::map<std::string, std::string> &logic);
+	void Compute_Tumour_Growth_V1(const std::map<std::string, std::string> &logic);
 
 	
 };

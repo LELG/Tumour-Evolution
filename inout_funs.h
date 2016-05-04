@@ -4,6 +4,7 @@
 #include "config.h"
 #include <iostream>         // std::cout,std::endl
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <sstream>
 #include <vector>
@@ -24,7 +25,7 @@
 
 
 bool FileExists (const std::string& name);
-
+bool FolderExists(const std::string& pathname);
  void ltrim(std::string &s);
  void rtrim(std::string &s); 
  void trim(std::string &s);

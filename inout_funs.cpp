@@ -1,6 +1,7 @@
 #include "config.h"
 #include <iostream>         // std::cout,std::endl
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <fstream>
 #include <string>
@@ -20,6 +21,30 @@ bool FileExists (const std::string& name)
   struct stat buffer;   
   return (stat (name.c_str(), &buffer) == 0); 
 }
+
+bool FolderExists(const std::string& path)
+{
+	struct stat info;
+	bool exists = false;
+	const char * pathname = path.c_str();
+
+	if( stat( pathname, &info ) != 0 )
+	{
+    	std::cout << "cannot access" << pathname << std::endl;
+	}
+	else if( info.st_mode & S_IFDIR )  // S_ISDIR() doesn't exist on my windows 
+	{
+   	 	std::cout << "is a directory: " <<  pathname << std::endl;
+   	 	exists = true;
+	}
+	else
+	{
+    	std::cout << "is not a directory: " << pathname << std::endl;
+	}
+
+	return exists;
+}
+
 
 // trim from start (in place)
  void ltrim(std::string &s) 

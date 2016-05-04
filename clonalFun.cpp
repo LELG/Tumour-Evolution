@@ -1,17 +1,21 @@
 #include "clonalFun.h"
+#include "inout_funs.h"
 #include "Random.h"
 #include "config.h"
 #include "ClonalExpansion.h"
 #include "Clone.h"
 #include <iostream>     // std::cout
+#include <sstream>
 #include <memory>           // std::unique_ptr
 #include <stdlib.h>         // EXIT_SUCCESS, EXIT_FAILURE
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string>
 #include <tuple>
-
-
+#include <algorithm>
+#include <iterator>
+#include <map>
+#include <functional>
 
 std::unique_ptr<Clone> get_Clone_DS()
 {
@@ -354,7 +358,7 @@ void carcinogensis_from_Driver(std::unique_ptr<Clonal_Expansion>  & tmr,
 	Random r;
 	 double mr = tmr -> Tumour -> at(*clone_indx) -> Mutation_Rate;
 	 unsigned int AC = tmr -> Tumour -> at(*clone_indx) -> Driver_10_fold_accumulation;
-	 unsigned int Accumulated_Drivers = tmr -> Tumour -> at(*clone_indx) -> Driver_10_fold_accumulation;
+	// unsigned int Accumulated_Drivers = tmr -> Tumour -> at(*clone_indx) -> Driver_10_fold_accumulation;
 	 unsigned long long int NOM = tmr -> Tumour -> at (*clone_indx) -> Number_of_Mutations;
 	 double pr = tmr -> Tumour -> at(*clone_indx) -> P_Expansion[1];
 
@@ -501,7 +505,7 @@ unsigned long long int Mutational_Effects_Normal_Kernell(std::unique_ptr<Clonal_
 
 	unsigned int buffer[5];
 
-	unsigned int number_of_mutations = 1;
+	//unsigned int number_of_mutations = 1;
 
 	/*
 		(1) This is a mutant cell we need to know how
@@ -1021,9 +1025,9 @@ void Compute_Tumour_Growth(std::unique_ptr<Clonal_Expansion>  & tmr, std::string
 	unsigned int seconds = 0;
 	unsigned int hours = 0;
 	unsigned int years = 0;
-	unsigned int elapsed_hours = 0;
+	//unsigned int elapsed_hours = 0;
 	unsigned int times_to_wait = 0;
-	bool print = false;
+	//bool print = false;
 
 	carcinogenesis(tmr);
 	tmr -> printParameters();
@@ -1043,11 +1047,95 @@ void Compute_Tumour_Growth(std::unique_ptr<Clonal_Expansion>  & tmr, std::string
 		if(hours == 8764)//8764
 		{
 			hours = 0; years ++;
-			print = true;
+			//print = true;
 		}
 
 	}//while
 	
+}
+
+void trim_path_to_vector(std::vector<std::string> & tokens, const std::string & s_path)
+{
+	tokens = split(s_path, '/');
+}
+
+void build_core_path(std::vector<std::string> & tokens, std::string & path_to_core)
+{
+	if(tokens.size() != 0)
+	{
+		for (auto i = tokens.begin(); i != tokens.end(); ++i)
+		{
+			if(*i == "core")
+			{
+				path_to_core += *i + "/";
+				break;
+			}
+			else
+			{
+				path_to_core += *i + "/";
+			}
+		}
+	}
+
+}
+
+bool check_valid_folders(const std::string & path_to_core, const std::string & path_to_settings)
+{
+	return FolderExists(path_to_core) & FolderExists(path_to_settings) ;
+}
+
+
+void build_settings_path(const std::string & path_to_core, std::string & path_to_settings)
+{
+	path_to_settings = path_to_core + "settings/";
+	if( check_valid_folders( path_to_core, path_to_settings) )
+	{
+		path_to_settings +=  "logic_flow.lgic";
+		if(!FileExists (path_to_settings))
+		{
+			std::cout << "ERROR: FILE NOT FOUND \n" ;
+		}
+	}
+	else
+	{
+		std::cout << "ERROR: INVALID PATH \n" ;
+	}
+}
+
+
+void Load_Logic_File(std::map<std::string, std::string> & logic )
+{
+	//using namespace std;
+	char buffer[1000];
+	char *path = getcwd(buffer, sizeof(buffer));
+	std::vector<std::string> tokens; 
+	std::string s_path;
+
+	std::string path_to_core = "";
+	std::string path_to_logic_file = "";
+
+	if (path)
+	{
+    	s_path = path;
+    	std::cout << "DIR: " << s_path << std::endl; 
+    	trim_path_to_vector(tokens, s_path);
+    	build_core_path(tokens, path_to_core);
+    	build_settings_path(path_to_core,  path_to_logic_file);
+	
+	}
+	std::cout << path_to_logic_file << std::endl;
+	logic = ReadAndParse( path_to_logic_file );
+	
+}
+
+
+void print_logic_file(const std::map<std::string, std::string> & logic)
+{
+	std::cout << "///// RUNNING PARAMETERS ////////" << std::endl;
+	for(auto it = logic.cbegin(); it != logic.cend(); ++it)
+	{
+    	std::cout << it->first << " = " << it->second << "\n";
+	}
 }
 
 

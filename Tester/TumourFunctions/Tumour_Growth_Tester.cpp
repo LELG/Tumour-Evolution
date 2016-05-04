@@ -96,7 +96,7 @@ int main(int argc, char**argv)
 	unsigned int hours = 0;
 	unsigned int years = 0;
 	//unsigned int elapsed_hours = 0;
-	unsigned int times_to_wait = 0;
+	//unsigned int times_to_wait = 0;
 	unsigned int ith_clone = 0; 
 
 	Random r;

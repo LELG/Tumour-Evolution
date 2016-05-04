@@ -8,13 +8,14 @@
 #include <string>
 #include <vector>
 #include <iostream>         // std::cout,std::endl
-
+#include <tuple>
 
 Clonal_Expansion::Clonal_Expansion()
  :
  	Population_Size(0),
  	feedback(0.0),
- 	mitosis(Clonal_Expansion::Standard)
+ 	mitosis(Clonal_Expansion::Standard),
+ 	Version(Clonal_Expansion::Tester)
  {       }
 
 Clonal_Expansion::~Clonal_Expansion()
@@ -80,6 +81,87 @@ std::string Clonal_Expansion::getMitosis_type(void)
  	return types[mitosis]; 
  }
 
+std::string Clonal_Expansion::getVersion_type(void)
+ {
+ 	std::string types[] = {"Tester", "V1", "V2", "V2R", "V3", "VM"};
+ 	return types[Version]; 
+ }
+
+ // void Clonal_Expansion::getMitosis_type_str(void)
+ // {
+ // 	std::string types[] = {"Standard", "Binomial", "Network"};
+ // 	return types[mitosis]; 
+ // }
+
+  void Clonal_Expansion::setVersion_type(const std::string & str_version)
+ {
+
+ 	if(str_version == "Tester")
+ 	{
+ 		Version = Clonal_Expansion::Tester;
+ 	}
+ 	else if(str_version == "V1")
+ 	{
+ 		Version = Clonal_Expansion::V1;
+
+ 	}
+ 	else if(str_version == "V2")
+ 	{
+ 		Version = Clonal_Expansion::V2;
+
+ 	}
+ 	else if(str_version == "V2R")
+ 	{
+ 		Version = Clonal_Expansion::V2R;
+
+ 	}
+ 	else if(str_version == "V3")
+ 	{
+ 		Version = Clonal_Expansion::V3;
+
+ 	}
+ 	else if(str_version == "VM")
+ 	{
+ 		Version = Clonal_Expansion::VM;
+
+ 	}
+ 	else
+ 	{
+ 		Version = Clonal_Expansion::VM;
+ 	}
+
+ }
+
+ void Clonal_Expansion::Select_Carcinogenesis(void)
+ {
+ 	switch(Version)
+ 	{
+ 		case 0:
+            std::cout << "0 Version: " << Version << std::endl;
+            break;
+        case 1:
+            std::cout << "1 Version: " << Version << std::endl;
+            carcinogenesis_V1();
+            break;
+        case 2:
+            std::cout << "2 Version: " << Version << std::endl;
+            break;
+        case 3:
+            std::cout << "3 Version: " << Version << std::endl;
+            break;
+        case 4:
+            std::cout << "4 Version: " << Version << std::endl;
+            break;
+        case 5:
+            std::cout << "5 Version: " << Version << std::endl;
+            break;
+        default:
+        	 std::cout << "Def Version: " << Version << std::endl;
+        	 break;
+ 	}//switch	
+ 
+ }
+
 /**
 	Adds a parent clone with size 1 in the tumour.
 	Steps:
@@ -89,6 +171,7 @@ std::string Clonal_Expansion::getMitosis_type(void)
 *******************************************/
 void Clonal_Expansion::carcinogenesis(void)
 {
+
 	// 1) Add a Clone
 	Random r;
 	// Adding a new clone
@@ -116,6 +199,35 @@ void Clonal_Expansion::carcinogenesis(void)
 	mitosis = Clonal_Expansion::Standard; // Requires modification from input parameter
 	
 	std::cout << "\t\tC A R C I N O G E N E S I S" << std::endl;
+}
+
+/*
+	Initialisation of Carcinogenesis of Version 1
+*/
+void Clonal_Expansion::carcinogenesis_V1(void)
+{
+	//std::cout << "Carcinogenesis Version 1 " << std::endl;
+	// 1) Add a Clone
+	Random r;
+	// Adding a new clone
+	Tumour -> push_back ( get_Clone_DS () );  
+	Tumour -> back() -> Initiall_Expasion_Period = true;
+	Tumour -> back() -> clone_extinct = false;
+	Tumour -> back() -> Clone_Size = 1;
+	Tumour -> back() -> In_G0_Phase = false;
+	Tumour -> back() -> In_G1_Phase = true;
+	Tumour -> back() -> In_S_Phase = false;
+	Tumour -> back() -> In_G2_Phase = false;
+	Tumour -> back() -> In_M_Phase = false;
+
+	Tumour -> back() -> Remaining_Time_in_G1_Phase = r.G1();
+	Tumour -> back() -> Remaining_Time_in_S_Phase = r.S();
+	Tumour -> back() -> Remaining_Time_in_G2_Phase = r.G2();
+	Tumour -> back() -> Remaining_Time_in_M_Phase = 1;
+	Tumour -> back() -> Generation_ID_Counter = 0; 
+	Tumour -> back() -> Generation_ID = "P-0:0";
+
+	Population_Size = Tumour -> back() -> Clone_Size;
 }
 
 
@@ -166,7 +278,7 @@ void Clonal_Expansion::carcinogenesis_from_driver(const unsigned int & ith_clone
 
 	double mr = Tumour -> at( ith_clone ) -> Mutation_Rate;
 	unsigned int AC = Tumour -> at( ith_clone ) -> Driver_10_fold_accumulation;
-	unsigned int Accumulated_Drivers = Tumour -> at( ith_clone ) -> Driver_10_fold_accumulation;
+	//unsigned int Accumulated_Drivers = Tumour -> at( ith_clone ) -> Driver_10_fold_accumulation;
 	unsigned long long int NOM = Tumour -> at( ith_clone ) -> Number_of_Mutations;
 	double pr = Tumour -> at( ith_clone ) -> P_Expansion[1];
 
@@ -301,9 +413,9 @@ void Clonal_Expansion::carcinogenesis(unsigned long long int &neoplastic_cells)
 	Check if the ith_clone is in G1 mitotic 
 	phase
 *******************************************/
-bool Clonal_Expansion::check_G1_phase(std::unique_ptr<Clone> const & ith_clone)
+bool Clonal_Expansion::check_G1_phase( const unsigned int & ith_clone)
 {
-	return (ith_clone -> In_G1_Phase && ith_clone -> Remaining_Time_in_G1_Phase !=0);
+	return (Tumour -> at(ith_clone) -> In_G1_Phase && Tumour -> at (ith_clone) -> Remaining_Time_in_G1_Phase !=0);
 }
 
 
@@ -311,89 +423,86 @@ bool Clonal_Expansion::check_G1_phase(std::unique_ptr<Clone> const & ith_clone)
 	Check if the ith_clone is exiting the G1 mitotic 
 	phase
 ******************************************************/
-bool Clonal_Expansion::exiting_G1_phase(std::unique_ptr<Clone> const & ith_clone)
+bool Clonal_Expansion::exiting_G1_phase( const unsigned int  & ith_clone)
 {
-	return (ith_clone -> In_G1_Phase && ith_clone -> Remaining_Time_in_G1_Phase == 0);
+	return (Tumour -> at(ith_clone) -> In_G1_Phase && Tumour -> at(ith_clone) -> Remaining_Time_in_G1_Phase == 0);
 }
 
 /**
 	Check if the ith_clone is in S mitotic 
 	phase
 *******************************************/
-bool Clonal_Expansion::check_S_phase(std::unique_ptr<Clone> const & ith_clone)
+bool Clonal_Expansion::check_S_phase( const unsigned int & ith_clone)
 {
-	return (ith_clone -> In_S_Phase && ith_clone -> Remaining_Time_in_S_Phase !=0);
+	return (Tumour -> at(ith_clone) -> In_S_Phase && Tumour -> at (ith_clone) -> Remaining_Time_in_S_Phase !=0);
 }
 
 /**
 	Check if the ith_clone is exiting the G1 mitotic 
 	phase
 ******************************************************/
-bool Clonal_Expansion::exiting_S_phase(std::unique_ptr<Clone> const & ith_clone)
+bool Clonal_Expansion::exiting_S_phase( const unsigned int  & ith_clone)
 {
-	return (ith_clone -> In_S_Phase && ith_clone -> Remaining_Time_in_S_Phase == 0);
+	return (Tumour -> at(ith_clone) -> In_S_Phase && Tumour -> at(ith_clone) -> Remaining_Time_in_S_Phase == 0);
 }
 
 /**
 	Check if the ith_clone is in G2 mitotic 
 	phase
 *******************************************/
-bool Clonal_Expansion::check_G2_phase(std::unique_ptr<Clone> const & ith_clone)
+bool Clonal_Expansion::check_G2_phase( const unsigned int  & ith_clone)
 {
-	return (ith_clone -> In_G2_Phase && ith_clone -> Remaining_Time_in_G2_Phase !=0);
+	return (Tumour -> at(ith_clone) -> In_G2_Phase && Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase !=0);
 }
 
 /**
 	Check if the ith_clone is exiting the G2 mitotic 
 	phase
 ******************************************************/
-bool Clonal_Expansion::exiting_G2_phase(std::unique_ptr<Clone> const & ith_clone)
+bool Clonal_Expansion::exiting_G2_phase( const unsigned int & ith_clone)
 {
-	return (ith_clone -> In_G2_Phase && ith_clone -> Remaining_Time_in_G2_Phase == 0);
+	return (Tumour -> at(ith_clone) -> In_G2_Phase && Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase == 0);
 }
 
 /**
 	ith_Clone from G1 -> S phase
 ******************************************************/
-void Clonal_Expansion::Transition_From_G1_S(std::unique_ptr<Clone> const & ith_clone)
+void Clonal_Expansion::Transition_From_G1_S(const unsigned int & ith_clone, Random & r)
 {
-	Random r;
-	ith_clone -> In_G1_Phase  = false; 
-	ith_clone -> Remaining_Time_in_G1_Phase = r.G1();
-	ith_clone -> In_S_Phase = true;
+	Tumour -> at(ith_clone) -> In_G1_Phase  = false; 
+	Tumour -> at(ith_clone) -> Remaining_Time_in_G1_Phase = r.G1();
+	Tumour -> at(ith_clone) -> In_S_Phase = true;
 }
 
 /**
 	ith_Clone from S -> G2 phase
 ******************************************************/
-void Clonal_Expansion::Transition_From_S_G2(std::unique_ptr<Clone> const & ith_clone)
+void Clonal_Expansion::Transition_From_S_G2( const unsigned int  & ith_clone, Random & r)
 {
-	Random r;
-	ith_clone -> In_S_Phase  = false; 
-	ith_clone -> Remaining_Time_in_S_Phase = r.S();
-	ith_clone -> In_G2_Phase = true;
+	Tumour -> at (ith_clone) -> In_S_Phase  = false; 
+	Tumour -> at (ith_clone) -> Remaining_Time_in_S_Phase = r.S();
+	Tumour -> at (ith_clone) -> In_G2_Phase = true;
 }
 
 /**
 	ith_Clone from G2 -> M phase
 ******************************************************/
-void Clonal_Expansion::Transition_From_G2_M(std::unique_ptr<Clone> const & ith_clone)
+void Clonal_Expansion::Transition_From_G2_M(const unsigned int  & ith_clone, Random & r)
 {
-	Random r;
-	ith_clone -> In_G2_Phase  = false; 
-	ith_clone -> Remaining_Time_in_G2_Phase = r.G2();
-	ith_clone -> In_M_Phase = true;
+	Tumour -> at(ith_clone) -> In_G2_Phase  = false; 
+	Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase = r.G2();
+	Tumour -> at(ith_clone) -> In_M_Phase = true;
 }
 
 
 
 // TODO Asymetric division
-void Clonal_Expansion::Update_Population_After_Division(std::unique_ptr<Clone> const & ith_clone)
+void Clonal_Expansion::Update_Population_After_Division_V1(const unsigned int  & ith_clone)
 {
 
-	unsigned long long int cells_after_division = ith_clone -> Clone_Size * 2;
-	Population_Size =  (Population_Size -  ith_clone -> Clone_Size ) + cells_after_division;
-	ith_clone -> Clone_Size = cells_after_division;
+	unsigned long long int cells_after_division = Tumour -> at (ith_clone) -> Clone_Size * 2;
+	Population_Size =  (Population_Size - Tumour -> at(ith_clone) -> Clone_Size ) + cells_after_division;
+	Tumour -> at(ith_clone) -> Clone_Size = cells_after_division;
 	std::cout << "Population_Size: " << Population_Size << std::endl;
 }
 
@@ -467,7 +576,7 @@ void Clonal_Expansion::Update_Clonal_Mutational_Burden(const unsigned int & ith_
 	unsigned int counter = 0;
 	unsigned int death = 0;
 	double effect_gain = static_cast<double>( Tumour -> at(ith_clone) -> P_Expansion[P_Expansion_PR] );
-	bool mut_effect_flag = false;
+	//bool mut_effect_flag = false;
 	
 
 	unsigned int j = 0;
@@ -981,25 +1090,277 @@ void Clonal_Expansion::Update_Tumour_Size()
 }
 
 
-void Clonal_Expansion::Non_Mutagenic_Mitosis_Standard(std::unique_ptr<Clone> const & ith_clone)
+// void Clonal_Expansion::Non_Mutagenic_Mitosis_Standard(std::unique_ptr<Clone> & ith_clone)
+// {
+
+// 	if( check_G1_phase(ith_clone) )
+// 		ith_clone -> Remaining_Time_in_G1_Phase--;
+// 	else if( exiting_G1_phase(ith_clone) )
+// 		Transition_From_G1_S(ith_clone);
+// 	else if( check_G1_phase(ith_clone) )
+// 		ith_clone -> Remaining_Time_in_S_Phase--;
+// 	else if( exiting_S_phase(ith_clone) )
+// 		Transition_From_S_G2(ith_clone);
+// 	else if( check_G2_phase(ith_clone) )
+// 		ith_clone -> Remaining_Time_in_G2_Phase--;
+// 	else if( exiting_G2_phase(ith_clone) )
+// 		Transition_From_G2_M(ith_clone);
+// 	else if( ith_clone -> In_M_Phase)
+// 	{
+// 		std::cout << "SEND TO DIVISION MODEL " << std::endl;
+// 		Update_Population_After_Division(ith_clone);
+// 	}
+// }
+
+void Clonal_Expansion::Reset_to_G1(const unsigned int & ith_clone)
+{
+	Tumour -> at (ith_clone) -> In_M_Phase = false;
+	Tumour -> at (ith_clone) -> In_G1_Phase = true;
+}
+
+void Clonal_Expansion::Valid_Size_Heterogeneity_V1(const unsigned int & ith_clone)
+{
+	
+	if( Tumour -> at(ith_clone) -> Clone_Size >= Tumour -> at(ith_clone) -> Number_of_Memebers_to_Start_Heterogeneity)
+	{
+		Tumour -> at(ith_clone) ->  Initiall_Expasion_Period = false;		
+	}
+			
+	// Tumour -> at (ith_clone) -> In_M_Phase = false;
+	// Tumour -> at (ith_clone) -> In_G1_Phase = true;
+}
+
+
+// V1 Final version
+
+void Clonal_Expansion::Non_Mutagenic_Mitosis_Standard_V1(const unsigned int & ith_clone, Random & r)
 {
 	if( check_G1_phase(ith_clone) )
-		ith_clone -> Remaining_Time_in_G1_Phase--;
+		Tumour -> at(ith_clone) -> Remaining_Time_in_G1_Phase--;
 	else if( exiting_G1_phase(ith_clone) )
-		Transition_From_G1_S(ith_clone);
-	else if( check_G1_phase(ith_clone) )
-		ith_clone -> Remaining_Time_in_S_Phase--;
+		Transition_From_G1_S(ith_clone, r);
+	else if( check_S_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_S_Phase--;	
 	else if( exiting_S_phase(ith_clone) )
-		Transition_From_S_G2(ith_clone);
+		Transition_From_S_G2(ith_clone, r);
 	else if( check_G2_phase(ith_clone) )
-		ith_clone -> Remaining_Time_in_G2_Phase--;
+		Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase--;
 	else if( exiting_G2_phase(ith_clone) )
-		Transition_From_G2_M(ith_clone);
-	else if( ith_clone -> In_M_Phase)
+		Transition_From_G2_M(ith_clone, r);
+	else if(Tumour -> at (ith_clone) -> In_M_Phase)
 	{
 		std::cout << "SEND TO DIVISION MODEL " << std::endl;
-		Update_Population_After_Division(ith_clone);
+		Update_Population_After_Division_V1(ith_clone);
+		Valid_Size_Heterogeneity_V1(ith_clone);
+	}
+	else
+	{
+		std::cout << "ERROR " << std::endl;
+	}
+
+
+
+}
+
+
+void Clonal_Expansion::Basic_Clonal_Expansion_V1(const unsigned int & ith_clone, std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn, Random & r)
+{
+	std::get<3>(Dying_and_Newborn) =  false;
+	std::get<4>(Dying_and_Newborn) =  true;
+	unsigned int n[3];
+	unsigned int mutant_cells = 0;
+
+	/*
+	1) Let's get basline parameters
+	*/
+	double P_DR =  Tumour -> at(ith_clone) -> P_Expansion[0];
+	double P_NB =  Tumour -> at(ith_clone) -> P_Expansion[1];
+
+	/*
+		2) Apply enviromental penalty to growth variables
+	*/
+
+	// if the penalty greater to PR lets cap it to 0 
+	if(feedback >= P_NB)
+	{
+		P_NB = 0;
+	}
+	else
+	{
+		P_NB -= feedback;
+	}
+
+	/*
+		3) Adjust Probability Mass
+	*/
+	double P_NT =  1.0 - (P_DR + P_NB );
+	//structure that holds potential values
+	double p[] = {P_DR, P_NB, P_NT};
+	//cast
+	gsl_ran_multinomial ( r_global, K, Tumour -> at (ith_clone) -> Clone_Size, p, n);
+
+	std::get<0>(Dying_and_Newborn) = n[0];// For Dying Clones 		
+	std::get<1>(Dying_and_Newborn) = n[1]; // For Newborn Clones 
+
+	if(std::get<1>(Dying_and_Newborn) > 0)
+	{	
+		std::get<2>(Dying_and_Newborn) = r.Binomial_Mutants(
+															std::get<1>(Dying_and_Newborn),
+															Tumour -> at(ith_clone) -> Mutation_Rate
+														   );
+		// Announce that there are mutants
+		mutant_cells = std::get<2>(Dying_and_Newborn); // Mutant cells
+		std::get<3>(Dying_and_Newborn) =  true;// flag that indicates that there are mutant cells
+
+		// Adjust Newborn gain as
+		// Newborn - Mutant cells
+		if(mutant_cells > std::get<1>(Dying_and_Newborn))
+		{
+			std::cout << "More mutant cells than newborn? " << " MC: " << mutant_cells << " NB: " << std::get<1>(Dying_and_Newborn) << std::endl;
+		}
+		else
+		{
+			std::get<1>(Dying_and_Newborn) -= mutant_cells;
+		}
+	}
+
+	int o = (int) ( Tumour -> at(ith_clone) -> Clone_Size + n[1]) - (int) (n[0] + mutant_cells);
+			
+	if(o <= 0)
+	{
+				
+		Tumour -> at(ith_clone) -> clone_extinct = true;
+
+				//cout << "CS: " <<  CE -> Tumour -> at(Generation_ID) -> Clone_Size << " D: "  
+				//	 << n[0]   << " B: " << n[1] << " M: " << m << " o: "  << o   << " ID extinct "  << 
+				//	 CE -> Tumour -> at(Generation_ID) -> Generation_ID << " E: " << 
+				//	 CE -> Tumour -> at(Generation_ID) -> clone_extinct  << " PS: " << CE -> Population_Size << endl;
+
+		std::get<4>(Dying_and_Newborn) =  false;
+		Population_Size -=   (unsigned long long int) Tumour  -> at(ith_clone) -> Clone_Size ;
+		Tumour -> at(ith_clone) -> Clone_Size = 0;
+				//cout << " PS: " << CE -> Tumour -> at(Generation_ID) -> Clone_Size << endl;
+				
+				//getchar();
 	}
 }
+
+void Clonal_Expansion::Dealyed_Mitosis_V1(const unsigned int & ith_clone, Random & r, unsigned int & hours, unsigned int & years)
+{
+	
+	std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> Dying_and_Newborn (0, 0, 0, false, true);
+
+	if( check_G1_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_G1_Phase--;
+	else if( exiting_G1_phase(ith_clone) )
+		Transition_From_G1_S(ith_clone, r);
+	else if( check_S_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_S_Phase--;	
+	else if( exiting_S_phase(ith_clone) )
+		Transition_From_S_G2(ith_clone, r);
+	else if( check_G2_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase--;
+	else if( exiting_G2_phase(ith_clone) )
+		Transition_From_G2_M(ith_clone, r);
+	else if(Tumour -> at (ith_clone) -> In_M_Phase)
+	{
+
+		Basic_Clonal_Expansion_V1(ith_clone, Dying_and_Newborn, r);
+		Reset_to_G1(ith_clone);
+		getchar();
+	}
+
+}
+
+
+
+void Clonal_Expansion::Update_Population_V1(unsigned int & hours, unsigned int & years, Random & r)
+{
+	unsigned int ith_clone = 0;
+	unsigned int number_of_clones = Tumour -> size();
+
+	for(ith_clone = 0; ith_clone < number_of_clones ; ith_clone++)
+	{
+		if(!Tumour -> at (ith_clone) -> clone_extinct)// if not extinct
+		{
+			if( Tumour -> at (ith_clone) -> Initiall_Expasion_Period )
+			{
+				//std::cout << "clone " << ith_clone << " alive and in initial exp" << std::endl;
+				Non_Mutagenic_Mitosis_Standard_V1(ith_clone, r);
+			}
+			else
+			{
+				
+				Dealyed_Mitosis_V1(ith_clone, r, hours, years);
+				
+			}
+		}
+	
+	}//for
+}
+
+//this will become the main
+void Clonal_Expansion::Compute_Tumour_Growth_V1(const std::map<std::string, std::string> &logic)
+{
+	//finalise initilisasing parameters
+	Random r;
+	unsigned int seconds = 0;
+	unsigned int hours = 0;
+	unsigned int years = 0;
+
+	/* File stream */
+	carcinogenesis_V1();
+	printValues (Tumour -> at(0));
+	while( Population_Size < 4000000000 && !( Population_Size == 0) && (years < 50) )
+	{
+		seconds += dt;
+		if(seconds == 3600)
+		{
+			seconds = 0; hours ++;
+			Update_Population_V1(hours, years, r);
+		}
+		if(hours == 8764)//8764
+		{
+			hours = 0; years ++;
+		}
+	}
+
+
+}
+
+void Clonal_Expansion::Compute_Tumour_Growth(const std::map<std::string, std::string> &logic)
+{
+	switch(Version)
+ 	{
+ 		case 0:
+            std::cout << "0 Version: " << Version << std::endl;
+            break;
+        case 1:
+            std::cout << "1 Version: " << Version << std::endl;
+            Compute_Tumour_Growth_V1(logic);
+            break;
+        case 2:
+            std::cout << "2 Version: " << Version << std::endl;
+            break;
+        case 3:
+            std::cout << "3 Version: " << Version << std::endl;
+            break;
+        case 4:
+            std::cout << "4 Version: " << Version << std::endl;
+            break;
+        case 5:
+            std::cout << "5 Version: " << Version << std::endl;
+            break;
+        default:
+        	 std::cout << "Def Version: " << Version << std::endl;
+        	 break;
+ 	}//switch	
+}
+
+
+//void Clonal_Expansion::Grow_Tumour()
+//{
+
+//}
 
 

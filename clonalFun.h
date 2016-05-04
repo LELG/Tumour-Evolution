@@ -9,6 +9,10 @@
 #include <string>
 #include <sstream>          // std::istringstream
 #include <tuple>
+#include <algorithm>
+#include <iterator>
+#include <map>
+#include <functional>
 /**	FUNCTION get_Clone_DS()
 		
 	This function returns a 
@@ -77,5 +81,11 @@ void update_population(std::unique_ptr<Clonal_Expansion>  & tmr, unsigned int ho
 void print_Status(std::unique_ptr<Clonal_Expansion>  & tmr, unsigned int hours, unsigned int years, int myID,  bool each_100 = false );
 unsigned int Abort_Condition(unsigned long long int Population_Size, unsigned int times_to_wait);
 void Compute_Tumour_Growth(std::unique_ptr<Clonal_Expansion>  & tmr, std::string BasePath, int myID);
+void trim_path_to_vector(std::vector<std::string> & tokens, const std::string & s_path);
+void build_core_path(std::vector<std::string> & tokens, std::string & path_to_core);
+bool check_valid_folders(const std::string & path_to_core, const std::string & path_to_settings);
+void build_settings_path(const std::string & path_to_core, std::string & path_to_settings);
+void Load_Logic_File(std::map<std::string, std::string> & logic );
+void print_logic_file(const std::map<std::string, std::string> & logic);
 
 #endif
