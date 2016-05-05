@@ -2,3 +2,6 @@ Growth = Primary
 Input = carcinogenesis
 Version = V1
 Penalty = standard
+Print_TS = true
+PR_Dist = Uniform
+Dist_Params = [0.001]

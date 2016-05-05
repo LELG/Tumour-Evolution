@@ -84,22 +84,24 @@ double Random::Uniform_Mutation_Rate(double mu_rate)
 	return std::uniform_real_distribution<double>{mu_rate/2.0, mu_rate*2.0}(eng);
 }
 
+// double Random::Update_Proliferation_Rate(double Parent_Proliferation_Rate)
+// {
+// 	double U = normal_distribution<double>{Parent_Proliferation_Rate, 0.000001 }(eng);//0.000001
+// 	if(U > 1.0)
+// 	{
+// 		U = 1.0;
+// 	}
+// 	if (U < 0.0)
+// 	{
+// 		U = 0.0;
+// 	}
+		
+// 	return U;
+// }
+
 double Random::Update_Proliferation_Rate(double Parent_Proliferation_Rate)
 {
-	//double U = normal_distribution<double>{Parent_Proliferation_Rate, 0.00000001 }(eng); //0.000001
-
-	//double U = uniform_real_distribution<double>{1.0, 10}(eng);
-	//U += Parent_Proliferation_Rate;
-	//double U = gsl_ran_beta(r_global, 1.0, 20.0);
-		
-
-	//double Relative_Proliferarion_Gain =  (Parent_Proliferation_Rate * U )/100.0;
-	//double Probability_Gain = Parent_Proliferation_Rate + Relative_Proliferarion_Gain;
-
-	//cout << " U " << Relative_Proliferarion_Gain;
-	//cout << " Par: " << Parent_Proliferation_Rate  << " PR "<< Probability_Gain <<  endl;
-
-
+	/*
 	double Proliferation_Gain = 0.05;//gsl_ran_beta(r_global, 1.0, (double) Accumulated_Drivers );
 	//cout << "B: " << Proliferation_Gain << " Par: " << Parent_Proliferation_Rate << " AC " << Accumulated_Drivers;
 	Proliferation_Gain += Parent_Proliferation_Rate;
@@ -113,6 +115,21 @@ double Random::Update_Proliferation_Rate(double Parent_Proliferation_Rate)
 		Proliferation_Gain = 0.0;
 
 	return Proliferation_Gain;
+	*/
+
+	//0.000001
+	double U = std::normal_distribution<double>{Parent_Proliferation_Rate, 0.001 }(eng);//0.000001
+	if(U > 1.0)
+	{
+		U = 1.0;
+	}
+	if (U < 0.0)
+	{
+		U = 0.0;
+	}
+		
+	return U;
+
 	
 }
 //TODO this is weird
@@ -127,6 +144,38 @@ double Random::Uniform_Mutation_Rate_2(double Parent_mu_rate)
 	//getchar();
 		
 	return U;
+}
+
+
+// For V1 smapling model//fix
+void Random::Basic_Clonal_Expansion_Sampling_V1( const unsigned long long int & Clone_Size, const  double & p_dr, const  double & p_pr, const double & p_idle, std::vector<unsigned int> & NewBorn_Cells)
+{
+
+
+	NewBorn_Cells.push_back(0);
+	NewBorn_Cells.push_back(0);
+	NewBorn_Cells.push_back(0);
+
+	static unsigned int buffer[3] = {0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
+	double p_vector[] = {p_dr, p_pr, p_idle};
+	const size_t K_S = 3;
+
+
+	gsl_ran_multinomial ( r_global,
+						  K_S,
+						  static_cast<unsigned int>(Clone_Size),
+						  p_vector,
+						  buffer
+						);
+
+	NewBorn_Cells[0] = buffer[0];
+	NewBorn_Cells[1] = buffer[1];
+	NewBorn_Cells[2] = buffer[2];
+
+	//std::cout << "DR: " << buffer[0] << " Pr: " << buffer[1] << " ID: " << buffer[2] << std::endl;
+
+	
+
 }
 
 

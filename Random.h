@@ -55,6 +55,9 @@ public:
     double Uniform_Mutation_Rate(double mu_rate);
     double Update_Proliferation_Rate(double Proliferation_Rate);
     double Uniform_Mutation_Rate_2(double Parent_mu_rate);
+
+    void Basic_Clonal_Expansion_Sampling_V1( const unsigned long long int & Clone_Size, const  double & p_dr, const  double & p_pr, const double & p_idle, std::vector<unsigned int> & NewBorn_Cells);
+
     unsigned int * Newborn_G0_and_G1(unsigned long long int &Newborn_cells, double & p_enter_G0);
     unsigned int * Update_G0_Phase(const unsigned int & G0_cells, const double & p_staying_G0, const double & p_dying_in_G0, const double & p_exiting_G0);
     unsigned int * Update_G1_Phase(const unsigned int & G1_cells, const double & p_staying_G1, const double & p_dying_in_G1, const double & p_exiting_G1);

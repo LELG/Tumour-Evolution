@@ -58,7 +58,7 @@ int main(int argc, char**argv)
 		std::cout << "VERSION TO RUN: " << logic["Version"] << std::endl;
 		Primary -> setVersion_type(logic["Version"] );
 		std::cout << Primary -> getVersion_type() << " associated with ID " <<  Primary -> Version << std::endl;
-		Primary -> Compute_Tumour_Growth(logic);
+		Primary -> Compute_Tumour_Growth(logic);/// can take out of here
 		//Primary -> Select_Carcinogenesis();
 	}
 	else

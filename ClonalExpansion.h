@@ -40,6 +40,25 @@ public:
 		V3 	   = 4,
 		VM     = 5
 	} Version;
+
+	enum SD_Penalty
+	{
+		standard = 0,
+		mean     = 1,
+		quartile  = 2
+		
+	} SD_Penalty;
+
+	enum PR_Sampling
+	{
+		Uniform = 0,
+		Uniform_V1 = 1,
+		Beta    = 2,
+		Pareto  = 3,
+		Gamma   = 4,
+		Laplace = 5
+
+	} PR_Sampling;
 		
 		/**
 			This is the main Data Structure to store all clones, this will
@@ -65,10 +84,14 @@ public:
 	void carcinogenesis(unsigned long long int &neoplastic_cells);
 	std::string getMitosis_type(void);
 	std::string getVersion_type(void);
+	 std::string getSD_Penalty(void);
 	//void getMitosis_type(void);
 
  	void setVersion_type(const std::string & str_version);
- 	void Select_Carcinogenesis();
+ 	void setSD_Penalty(const std::string & str_Penalty);
+ 	void Map_Feedback_Penalty(void);
+ 	void Select_Size_Dependant_Penalty(void);
+ 	void Select_Carcinogenesis(void);
  	void carcinogenesis_V1(void);
 
 	void Generate_Clone_Generation_ID( std::string & newGeneration_ID,
@@ -90,7 +113,7 @@ public:
 	void Transition_From_S_G2(const unsigned int  & ith_clone, Random & r);
 	void Transition_From_G2_M(const unsigned int  & ith_clone, Random & r);
 	void Update_Population_After_Division_V1(const unsigned int  & ith_clone);
-	void Dealyed_Mitosis_V1(const unsigned int & ith_clone, Random & r, unsigned int & hours, unsigned int & years);
+	void Dealyed_Mitosis_V1(const unsigned int & ith_clone, Random & r, const unsigned int & hours, const unsigned int & years);
 	void Estimate_Mutational_Effects(unsigned int & Mutant_Cells, unsigned long long int & Clone_Size);
 	void Update_Clonal_Mutational_Burden(const unsigned int & ith_clone, const unsigned int & Mutant_cells, const unsigned int & years, const unsigned int & hours, std::vector<unsigned int> & Mutations, Random & r );
 	void carcinogenesis_from_driver(const unsigned int & ith_clone, const unsigned int & years, const unsigned int & hours, Random & r);
@@ -115,11 +138,21 @@ public:
 	
 	void Update_Tumour_Size();
 	void map_Feedback(  );
+	void Adjust_Feedback_PR(double & P_NB);
+	void Check_Clonal_Extinction_BCE_V1(const unsigned int & ith_clone, std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn);
+	void Print_Debug_Carcinogeneisis_From_Driver(const unsigned int & ith_clone);
+	void Carcinogenesis_From_Driver_V1(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years, Random & r);
+	void Checking_for_Mutants(std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn, Random & r, const unsigned int & ith_clone);
+	void Mutant_Effects_V1(const unsigned int & ith_clone, const std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn,  const unsigned int & hours, const unsigned int & years, Random & r);
+	void Apply_Penalties_to_Mutants_V1(const unsigned int & ith_clone, const std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn, const unsigned int & hours, const unsigned int & years, Random & r);
+	void Update_Mutant_Mutational_Effects(const unsigned int & ith_clone, Random & r, const unsigned int & hours, const unsigned int & years, const std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn);
+	void Update_Newborn_Parameters_V1(const std::vector<unsigned int> & NewBorn_Cells, std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn);
 	void Basic_Clonal_Expansion_V1(const unsigned int & ith_clone, std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn, Random & r);
 	void Reset_to_G1(const unsigned int & ith_clone);
 	void Valid_Size_Heterogeneity_V1(const unsigned int & ith_clone);
 	void Update_Population_V1(unsigned int & hours, unsigned int & years, Random & r);
 	void Compute_Tumour_Growth(const std::map<std::string, std::string> &logic);
+	void print_Status( const unsigned int & hours, const unsigned int & years,  const bool & each_100);
 	void Compute_Tumour_Growth_V1(const std::map<std::string, std::string> &logic);
 
 	
