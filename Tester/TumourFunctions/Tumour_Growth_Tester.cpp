@@ -22,7 +22,6 @@ int main(int argc, char**argv)
   	gsl_rng_set (r_global, seed);  
   	//***** SET UP Random ********//
 
-
 	std::cout << "TESTING MITOSIS " << std::endl;
 
 	std::unique_ptr<Clonal_Expansion>  tmr = get_Clonal_Expasion_DS();

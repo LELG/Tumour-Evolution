@@ -8,14 +8,17 @@
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_math.h>
 #include <limits>
+#include <random>
+
 
 //-1 MR for testing
-const double MUT_RATE           = 0.0000001; //0.0000001
+const double MUT_RATE           = 0.00001; //0.0000001
 const double DEATH_RATE         = 0.001;
 const double PROLIFERATION_RATE = 0.002;
 
-const unsigned long long MAXIMUM_POPULATION_SIZE =  4000000000; //100000; //1000000000;
+const unsigned long long MAXIMUM_POPULATION_SIZE =  1000000000; //100000; //1000000000;
 const unsigned long long MAXIMUM_POPULATION_SIZE_TO_STOP =   MAXIMUM_POPULATION_SIZE + 1000; // + 2000000000;
+const unsigned int STOP_AFTER_DIAGNOSIS_COUNTER = 100;
 const double  PS = (double) MAXIMUM_POPULATION_SIZE;
 
 
@@ -63,7 +66,7 @@ const bool MULTIPLE_TUMOURS = false;
 const int PENALTY = 1;
 
 const double KILLER_PROBABILITY = 0.025;
-const double DRIVER_PROBABILITY = 0.015;
+const double DRIVER_PROBABILITY = 0.025;
 const double PASSENGER_PROBAILIBITY = 0.70;
 const double DELETERIOUS_PROBABILITY = 0.20;
 const double BENEFICIAL_PROBABILITY = 0.050;
@@ -73,6 +76,9 @@ const bool MULTIPLE_MUTATIONS = true;
 const int MUTATION_MODEL = 1;
 
 gsl_rng *r_global ;		
+
+
+
 
  // const unsigned int P_STAYING = 3;
  // const unsigned int P_DYING   = 4;

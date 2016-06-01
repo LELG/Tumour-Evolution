@@ -38,8 +38,15 @@ for(i in files  )
 }
 
 par(mfrow=c(2,1))
-df <- read.table("~/Documents/TEM/src/core/Tester/TumourFunctions/Mitosis_Model/te_file_31.txt", header = FALSE)
+df <- read.table("~/Documents/TEM/src/core/Tester/TumourFunctions/Mitosis_Model/V2_te_file_01.txt", header = FALSE)
 plot(df$V2/8760, df$V1, col="blue", type  ="l", xlab="years", ylab="Tumour Size", main="Mitosis PR=0.03, DR= 0.03 MR=1 × 10^-6, Laplace")
 plot(df$V2/8760, df$V3, col="blue", xlab="years", ylab="Tumour Size", main="Mitosis Clones PR=0.03, DR= 0.03 MR=1 × 10^-, Laplace")
 
+
+
+# For V2
+par(mfrow=c(2,1))
+df <- read.table("~/Documents/TEM/src/core/Tester/TumourFunctions/Mitosis_Model/V2_te_file_01.txt", header = FALSE)
+plot(df$V2/8760, df$V1 ,xlim=c(17.3, max(df$V2/8760) ), col="blue", type  ="l", xlab="years", ylab="Tumour Size", main="Mitosis PR=0.03, DR= 0.03 MR=1 × 10^-6, Laplace")
+plot(df$V2/8760, df$V3, xlim=c(17.3, max(df$V2/8760) ), col="blue", xlab="years", ylab="Tumour Size", main="Mitosis Clones PR=0.03, DR= 0.03 MR=1 × 10^-, Laplace")
 

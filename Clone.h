@@ -31,7 +31,7 @@ public:
 	/**
 	    The Following variables can be modified at runtime.	
     ********************************************************/
-	unsigned long long int  Number_of_Mutations;
+	//unsigned long long int  Number_of_Mutations;
 	unsigned long long int Clone_Size; 
 	bool Initiall_Expasion_Period;
 
@@ -100,6 +100,9 @@ public:
 	unsigned int  M_cells;
 
 	unsigned int Available_cells;
+
+	unsigned long long int Clonal_Mutations;
+	double Clonal_Mutational_Burden;
 
 public:
 	Clone();

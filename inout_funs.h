@@ -26,9 +26,11 @@
 
 bool FileExists (const std::string& name);
 bool FolderExists(const std::string& pathname);
+std::string ReplaceAll(std::string str, const std::string& from, const std::string& to) ;
  void ltrim(std::string &s);
  void rtrim(std::string &s); 
  void trim(std::string &s);
+
  std::string ltrimmed(std::string s);
 std::string rtrimmed(std::string s);
  std::string trimmed(std::string s) ;

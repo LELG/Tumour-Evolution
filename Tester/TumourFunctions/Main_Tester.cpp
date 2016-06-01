@@ -12,23 +12,36 @@
 #include <limits>
 #include <chrono>
 #include <thread>
+#include <mpi.h>	// Needs to be included in order to use MPI
 
 int main(int argc, char**argv)
 {
 	//*************** SET UP Random ********//
-	long seed;
-	r_global = gsl_rng_alloc (gsl_rng_rand48);     // pick random number generator
-  	seed = time (NULL) * getpid();    
-  	gsl_rng_set (r_global, seed);  
+	// long seed;
+	// r_global = gsl_rng_alloc (gsl_rng_rand48);     // pick random number generator
+ //  	seed = time (NULL) * getpid();    
+ //  	gsl_rng_set (r_global, seed);  
   	//*************** SET UP Random ********//
+
+  	int			myID;
+	int			N_Procs;
+
+	unsigned int replicates = 100;
 
   	
   	std::map<std::string, std::string> logic;
   	std::unique_ptr<Clonal_Expansion>  Primary ;
   	std::unique_ptr<Clonal_Expansion>  Metastasis ;
+
+  	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD,	&myID); 
+	MPI_Comm_size(MPI_COMM_WORLD,	&N_Procs);
   	
 
+
   	Load_Logic_File(logic);
+
+  	std::string data_path = "";
 
   	if(logic.size() >= 1)
 	{
@@ -38,43 +51,44 @@ int main(int argc, char**argv)
 	//std::cout << "VERSION TO RUN: " << logic["Version"] << std::endl;
 
 	// Growth
-	std::cout << "Type of Growth: " ;
+for(unsigned int  i = 0; i < replicates; i++)
+{
+	if(myID == 0) {std::cout << "Type of Growth: " ;}
+	
 	if(logic["Growth"] == "Primary")
 	{
-		std::cout << "Primary \n";
+		if(myID == 0) {std::cout << "Primary \n";}
 		Primary = get_Clonal_Expasion_DS();
 	}
 	else
 	{
-		std::cout << " Multiple \n";
+		if(myID == 0) {std::cout << " Multiple \n";}
 		//lop with metastasis or multiple primary tumours
 	}
 
 	// Input
-	std::cout << "Input of Growth: " ;
+	if(myID == 0){std::cout << "Input of Growth: " ;}
 	if(logic["Input"] == "carcinogenesis")
 	{
-		std::cout << "carcinogenesis \n";
-		std::cout << "VERSION TO RUN: " << logic["Version"] << std::endl;
+		if(myID == 0){std::cout << "carcinogenesis \n";}
+		if(myID == 0){std::cout << "VERSION TO RUN: " << logic["Version"] << std::endl;}
+		
 		Primary -> setVersion_type(logic["Version"] );
-		std::cout << Primary -> getVersion_type() << " associated with ID " <<  Primary -> Version << std::endl;
-		Primary -> Compute_Tumour_Growth(logic);/// can take out of here
+		
+		if(myID == 0){std::cout << Primary -> getVersion_type() << " associated with ID " <<  Primary -> Version << std::endl;}
+
+		Primary -> Compute_Tumour_Growth(logic, i, myID, data_path );/// can take out of here
+		
 		//Primary -> Select_Carcinogenesis();
 	}
 	else
 	{
-		std::cout << " File \n";
+		if(myID == 0){ std::cout << " File \n";}
 	}
 
-
-
-
-
-
-
-
-
-
+	Primary.reset();
+	Primary.get();
+}
 
 
 	//std::unique_ptr<Clonal_Expansion>  Primary = get_Clonal_Expasion_DS(); // calling clonalfun 
@@ -83,7 +97,7 @@ int main(int argc, char**argv)
 
 	//Primary -> carcinogenesis(); 
 
-	std::cout << "END DATA " << std::endl;
+	std::cout << "END DATA PROCESS: " << myID << std::endl;
 
 	// tmr -> Tumour -> at(0) -> Available_cells = 0;
 
@@ -204,7 +218,7 @@ int main(int argc, char**argv)
 	// te_file.close();
 
 
-
+	MPI_Finalize();
 	return 0;
 }// End of main
 

@@ -10,6 +10,7 @@
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_math.h>
+#include <random>
 // Definitions 
 extern const double MUT_RATE; // = 0.0000001;//0.0002002
 extern const double DEATH_RATE; //= 0.02;
@@ -18,6 +19,7 @@ extern const double PROLIFERATION_RATE; //= 0.03;
 extern const unsigned long long MAXIMUM_POPULATION_SIZE; //=   4500000000; //1000000000;
 extern const unsigned long long MAXIMUM_POPULATION_SIZE_TO_STOP ;;//=   MAXIMUM_POPULATION_SIZE + 2000000000; //1000000000;
 extern const double  PS ; //= (double) MAXIMUM_POPULATION_SIZE;
+extern const unsigned int STOP_AFTER_DIAGNOSIS_COUNTER ;
 
 
 extern const std::map<std::string, bool> CLONE_VARIABLES;
@@ -91,7 +93,6 @@ const unsigned int NEXT_STAGE = 2;
 const unsigned int REVERT_TO_G0 = 3;
 
 
-
-
+    
 
 #endif

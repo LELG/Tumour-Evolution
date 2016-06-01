@@ -26,7 +26,7 @@ Clone::Clone()
 	Driver_10_fold_accumulation(10),
 	clone_extinct(0),
 	Mutation_Rate(MUT_RATE),
-	Number_of_Mutations(0),
+	//Number_of_Mutations(0),
 	Clone_Size(0),
 	Initiall_Expasion_Period(0),
 	In_G0_Phase(0),
@@ -53,7 +53,9 @@ Clone::Clone()
 	G2_cells (0),
 	S_cells  (0),
 	M_cells  (0),
-	Available_cells(0)
+	Available_cells(0),
+	Clonal_Mutations(0),
+	Clonal_Mutational_Burden(0.0)
  { }
 
  Clone::~Clone()
@@ -125,7 +127,7 @@ void  Clone::LoadElementsFromMap(std::map<std::string, std::string> *rawData)
 
 	 if( rawData -> count("Number_of_Mutations") )
 	 {
-	 	Number_of_Mutations = std::stoull( rawData -> at("Number_of_Mutations") ) ;
+	 	Clonal_Mutations = std::stoull( rawData -> at("Number_of_Mutations") ) ;
 	 }
 
 	 if( rawData -> count("Clone_Size") )

@@ -47,16 +47,28 @@ public:
     unsigned int S();
     unsigned int G2();
     unsigned int Poisson();
+    void Multiple_Mutations_Poisson(unsigned int & number_of_mutations);
     double Z();
     double Binomial_dying(unsigned int Clone_Size, double Death_Rate);
     double Binomial_newborn(unsigned int Clone_Size, double Adjusted_Proliferation_Rate);
     unsigned int Binomial_Mutants(unsigned int NewBorn_Size, double Mutation_Rate);
 
+    void Uniform_Gain_Update(const double & Parent_mu_rate, const double gain, double & updated_MR);
+    void Uniform_PR_Update(const double & Parent_Proliferation_Rate, const double & Variance, double & updated_PR);
     double Uniform_Mutation_Rate(double mu_rate);
     double Update_Proliferation_Rate(double Proliferation_Rate);
+    void Update_Proliferation_Rate_V2(const double & Parent_Proliferation_Rate, double & new_PR );
     double Uniform_Mutation_Rate_2(double Parent_mu_rate);
 
     void Basic_Clonal_Expansion_Sampling_V1( const unsigned long long int & Clone_Size, const  double & p_dr, const  double & p_pr, const double & p_idle, std::vector<unsigned int> & NewBorn_Cells);
+
+    void Basic_Clonal_Expansion_Sampling_V1_HPC(const unsigned long long int & Clone_Size, const double & p_dr, const double & p_pr, std::vector<unsigned long long int> & NewBorn_Cells);
+
+    void Binomial_Mutant( std::tuple<unsigned long long int, 
+                                     unsigned long long int, 
+                                     unsigned long long int, 
+                                     bool, bool> & Dying_and_Newborn,
+                                     const double & mutation_rate);
 
     unsigned int * Newborn_G0_and_G1(unsigned long long int &Newborn_cells, double & p_enter_G0);
     unsigned int * Update_G0_Phase(const unsigned int & G0_cells, const double & p_staying_G0, const double & p_dying_in_G0, const double & p_exiting_G0);
@@ -72,7 +84,9 @@ public:
     void Laplace(double & effect, unsigned int & Clone_size);
     void Mutational_Proportions( const double & p_go_to_G0,const  double & p_go_to_G1, const unsigned int & Mutant_Cells, std::vector<unsigned int> & Mutations );
 
-private:        
+private: 
+    //std::mt19937 rng;
+    //rng.seed(std::random_device()());       
     std::mt19937 eng{std::random_device{}()};
 
 

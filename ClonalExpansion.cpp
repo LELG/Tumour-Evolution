@@ -2,23 +2,40 @@
 #include "Clone.h"
 #include "config.h"
 #include "clonalFun.h"
+#include "inout_funs.h"
 #include "Random.h"
 #include <map>
 #include <memory>           // std::unique_ptr
 #include <string>
+#include <cstring>
 #include <vector>
 #include <iostream>         // std::cout,std::endl
 #include <tuple>
-
+#include <random>
+#include <fstream>
+#include <libgen.h>
+#include <time.h>
+#include <stdio.h>
+#include <algorithm>
+#include <sys/stat.h>
+#include <mpi.h>
 Clonal_Expansion::Clonal_Expansion()
  :
  	Population_Size( 0 ),
  	feedback( 0.0 ),
- 	mitosis( Clonal_Expansion::Standard ),
+ 	Mitosis( Clonal_Expansion::Delayed_V1 ),
  	Version( Clonal_Expansion::Tester ),
  	SD_Penalty( Clonal_Expansion::standard ),
- 	PR_Sampling( Clonal_Expansion::Uniform )
- {       }
+ 	PR_Sampling( Clonal_Expansion::Uniform ),
+ 	MR_Sampling( Clonal_Expansion::uniform),
+ 	Mutational_Effects( Clonal_Expansion::Normal_gradient ),
+ 	Passenger_Distribution(Clonal_Expansion::Passenger_Beta),
+ 	Deleterious_Distribution(Clonal_Expansion::Deleterious_Beta),
+ 	Beneficial_Distribution(Clonal_Expansion::Beneficial_Beta),
+ 	Penalty_Max_Population_Size(PS),
+	PR_DR_Difference(DIFF),
+	Multiple_Mutations(false)
+ 	{       }
 
 Clonal_Expansion::~Clonal_Expansion()
  {       }
@@ -35,6 +52,16 @@ Clonal_Expansion::~Clonal_Expansion()
  	std::cout << "\tPopulation Size: " << Population_Size << std::endl;
  	std::cout << "\tNumber of Clones: " << Tumour -> size() << std::endl;
  	std::cout << "}\n#################################" << std::endl; 
+ }
+
+
+
+ void Clonal_Expansion::Init_Random(void)
+ {
+ 	long seed;
+	r_global = gsl_rng_alloc (gsl_rng_rand48);     // pick random number generator
+  	seed = time (NULL) * getpid();    
+  	gsl_rng_set (r_global, seed);  
  }
 
  void Clonal_Expansion::printValues (std::unique_ptr<Clone> const & ith_clone)
@@ -79,8 +106,8 @@ Clonal_Expansion::~Clonal_Expansion()
 
 std::string Clonal_Expansion::getMitosis_type(void)
  {
- 	std::string types[] = {"Standard", "Binomial", "Network"};
- 	return types[mitosis]; 
+ 	std::string types[] = {"Delayed_V1", "Delayed_V2", "Network"};
+ 	return types[Mitosis]; 
  }
 
 std::string Clonal_Expansion::getVersion_type(void)
@@ -95,11 +122,107 @@ std::string Clonal_Expansion::getVersion_type(void)
  	return types[SD_Penalty]; 
  }
 
- // void Clonal_Expansion::getMitosis_type_str(void)
- // {
- // 	std::string types[] = {"Standard", "Binomial", "Network"};
- // 	return types[mitosis]; 
- // }
+ std::string Clonal_Expansion::getMutational_Effect_Dist(void)
+ {
+ 	std::string types[] = {"Normal_gradient","Exponential","Double_Beta"};
+ 	return types[SD_Penalty]; 
+ }
+
+ void Clonal_Expansion::setMutational_Effect_Dist(const std::string & str_mutational_effect_dist)
+ {
+ 	if( str_mutational_effect_dist == "Normal_gradient" )
+ 	{
+ 		Mutational_Effects = Clonal_Expansion::Normal_gradient;
+ 	}
+ 	else if(str_mutational_effect_dist == "Exponential")
+ 	{
+ 		Mutational_Effects = Clonal_Expansion::Exponential;
+ 	}
+ 	else if( str_mutational_effect_dist == "Double_Beta" )
+ 	{
+ 		Mutational_Effects = Clonal_Expansion::Double_Beta;
+ 	}
+ 	else
+ 	{
+ 		Mutational_Effects = Clonal_Expansion::Normal_gradient;
+ 	}
+ }
+
+
+
+
+void Clonal_Expansion::setMR_Sampling_type(const std::string & str_mr_sampling)
+{
+
+	if(str_mr_sampling == "uniform")
+	{
+		MR_Sampling = Clonal_Expansion::uniform;
+	}
+	else if (str_mr_sampling == "uniform_Gain")
+	{
+		MR_Sampling = Clonal_Expansion::uniform_Gain;
+	}
+	else if (str_mr_sampling == "beta")
+	{
+		MR_Sampling = Clonal_Expansion::beta;
+	}
+	else 
+	{
+		MR_Sampling = Clonal_Expansion::uniform;
+	}
+}
+
+void Clonal_Expansion::setPR_Sampling_type(const std::string & str_sampling)
+{
+	if(str_sampling == "Uniform")
+	{
+		PR_Sampling = Clonal_Expansion::Uniform;
+	}
+	else if(str_sampling == "Uniform_V1")
+	{
+		PR_Sampling = Clonal_Expansion::Uniform_V1;
+	}
+	else if(str_sampling == "Beta")
+	{
+		PR_Sampling = Clonal_Expansion::Beta;
+	}
+	else if(str_sampling == "Pareto" )
+	{
+		PR_Sampling = Clonal_Expansion::Pareto;
+	}
+	else if(str_sampling == "Gamma")
+	{
+		PR_Sampling = Clonal_Expansion::Gamma;
+	}
+	else if(str_sampling == "Laplace")
+	{
+		PR_Sampling = Clonal_Expansion::Laplace;
+	}
+	else
+	{
+		PR_Sampling = Clonal_Expansion::Uniform;
+	}
+}
+
+ void Clonal_Expansion::setMistosis_type(const std::string & str_mitosis)
+ {
+ 	if(str_mitosis == "Delayed_V1")
+ 	{
+ 		Mitosis = Clonal_Expansion::Delayed_V1;
+ 	}
+ 	else if(str_mitosis == "Delayed_V2")
+ 	{
+ 		Mitosis = Clonal_Expansion::Delayed_V2;
+ 	}
+ 	else if(str_mitosis == "Network")
+ 	{
+ 		Mitosis = Clonal_Expansion::Network;
+ 	}
+ 	else
+ 	{
+ 		Mitosis = Clonal_Expansion::Delayed_V1;
+ 	}
+ }
 
   void Clonal_Expansion::setVersion_type(const std::string & str_version)
  {
@@ -161,11 +284,330 @@ void Clonal_Expansion::setSD_Penalty(const std::string & str_Penalty)
 
 }
 
+void Clonal_Expansion::setPassenger_Distribution( const std::string & str_Passenger_Distribution )
+{
+	if( str_Passenger_Distribution == "Passenger_Beta" )
+	{
+		Passenger_Distribution = Clonal_Expansion::Passenger_Beta;
+	}
+	else if( str_Passenger_Distribution == "Passenger_Pareto" )
+	{
+		Passenger_Distribution = Clonal_Expansion::Passenger_Pareto;
+	}
+	else if(str_Passenger_Distribution == "Passenger_Laplace" )
+	{
+		Passenger_Distribution = Clonal_Expansion::Passenger_Laplace;
+	}
+	else if(str_Passenger_Distribution == "Passenger_Gamma" )
+	{
+		Passenger_Distribution = Clonal_Expansion::Passenger_Gamma;
+	}
+	else
+	{
+		Passenger_Distribution = Clonal_Expansion::Passenger_Beta;
+	}
+}
+
+void Clonal_Expansion::setDeleterious_Distribution( const std::string & str_Deleterious_Distribution )
+{
+	if( str_Deleterious_Distribution == "Deleterious_Beta" )
+	{
+		Deleterious_Distribution = Clonal_Expansion::Deleterious_Beta;
+	}
+	else if(str_Deleterious_Distribution == "Deleterious_Pareto")
+	{
+		Deleterious_Distribution = Clonal_Expansion::Deleterious_Pareto;
+	}
+	else if( str_Deleterious_Distribution == "Deleterious_Laplace" )
+	{
+		Deleterious_Distribution = Clonal_Expansion::Deleterious_Laplace;
+	}
+	else if(str_Deleterious_Distribution == "Deleterious_Gamma")
+	{
+		Deleterious_Distribution = Clonal_Expansion::Deleterious_Gamma;
+	}
+	else
+	{
+		Deleterious_Distribution = Clonal_Expansion::Deleterious_Beta;
+	}
+}
+
+void Clonal_Expansion::setBeneficial_Distribution(const std::string & str_Beneficial_Distribution )
+{
+	if(str_Beneficial_Distribution == "Beneficial_Beta" )
+	{
+		Beneficial_Distribution = Clonal_Expansion::Beneficial_Beta;
+	}
+	else if( str_Beneficial_Distribution == "Beneficial_Pareto" )
+	{
+		Beneficial_Distribution = Clonal_Expansion::Beneficial_Pareto;
+	}
+	else if (str_Beneficial_Distribution == "Beneficial_Laplace" )
+	{
+		Beneficial_Distribution = Clonal_Expansion::Beneficial_Laplace;
+	}
+	else if ( str_Beneficial_Distribution == "Beneficial_Gamma")
+	{
+		Beneficial_Distribution = Clonal_Expansion::Beneficial_Gamma;
+	} 
+	else 
+	{
+		Beneficial_Distribution = Clonal_Expansion::Beneficial_Beta;
+	}
+}
+
+
+void Clonal_Expansion::Passenger_Beta_Sampling( double & Penalty)
+{
+	Penalty = gsl_ran_beta (r_global, Passenger_Distribution_Parameters.at(0), Passenger_Distribution_Parameters.at(1));
+}
+
+void Clonal_Expansion::Select_Passenger_Distribution(double & Penalty)
+{
+	switch(Passenger_Distribution)
+	{
+		case 0:
+			//std::cout << "Passenger_Beta " << std::endl;
+			Passenger_Beta_Sampling( Penalty );
+		break;
+		case 1:
+			std::cout << "Passenger_Pareto " << std::endl;
+		break;
+		case 2:
+			std::cout << " Passenger_Laplace " << std::endl;
+		break;
+		case 3: 
+			std::cout << "Passenger_Gamma " << std::endl;
+		break;
+		default:
+			std::cout << "Passenger_Beta " << std::endl;
+		break;
+
+
+	}
+}
+
+void Clonal_Expansion::Deleterious_Beta_Sampling( double & Penalty )
+{
+	Penalty = gsl_ran_beta (r_global, Deleterious_Distribution_Parameters.at(0), Deleterious_Distribution_Parameters.at(1));
+}
+
+void Clonal_Expansion::Select_Deleterious_distribution(double & Penalty )
+{
+	switch(Deleterious_Distribution)
+	{
+		case 0:
+			//std::cout << "Deleterious_Beta " << std::endl;
+			Deleterious_Beta_Sampling( Penalty );
+		break;
+		case 1:
+			std::cout << "Deleterious_Pareto " << std::endl;
+		break;
+		case 2:
+			std::cout << "Deleterious_Laplace " << std::endl;
+		break;
+		case 3: 
+			std::cout << "Deleterious_Gamma " << std::endl;
+		break;
+		default:
+			std::cout << "Deleterious_Beta " << std::endl;
+		break;
+	}
+}
+
+void Clonal_Expansion::Beneficial_Beta_Sampling( double & Penalty )
+{
+	Penalty = gsl_ran_beta (r_global, Beneficial_Distribution_Parameters.at(0), Beneficial_Distribution_Parameters.at(1));
+}
+
+void Clonal_Expansion::Select_Beneficial_distribution(double & Penalty)
+{
+		switch(Beneficial_Distribution)
+	{
+		case 0:
+			//std::cout << "Beneficial_Beta " << std::endl;
+			Beneficial_Beta_Sampling( Penalty );
+		break;
+		case 1:
+			std::cout << "Beneficial_Pareto " << std::endl;
+		break;
+		case 2:
+			std::cout << "Beneficial_Laplace " << std::endl;
+		break;
+		case 3: 
+			std::cout << "Beneficial_Gamma " << std::endl;
+		break;
+		default:
+			std::cout << "Beneficial_Beta " << std::endl;
+		break;
+	}
+}
+
+
 
 void Clonal_Expansion::Map_Feedback_Penalty()
 {
-	feedback =  0.0 + (DIFF - 0.0) * (( (double) Population_Size - 0.0) / ((double) PS - 0.0));
+	feedback =  (PR_DR_Difference - 0.0) * (( (double) Population_Size - 0.0) / ( Penalty_Max_Population_Size - 0.0));
 	//std::cout << "Feedback " << feedback << std::endl;
+}
+
+void Clonal_Expansion::Induce_Multiple_Mutations(unsigned int & number_of_mutations)
+{
+	if(Multiple_Mutations)
+	{
+		r.Multiple_Mutations_Poisson(number_of_mutations);
+	}
+	else
+	{
+		number_of_mutations = 1;
+	}
+}
+
+//Mutational effects distribution
+
+void Clonal_Expansion::Normal_Gradient_Mutational_Effect(const unsigned int & ith_clone, std::tuple<unsigned long long int, 
+																									  unsigned long long int, 
+																									  unsigned long long int, 
+																									  bool, bool> & Dying_and_Newborn, const unsigned int & hours, const unsigned int & years)
+{
+	unsigned int buffer[5];
+	unsigned long long int Mutants_in_clone = 0;
+	
+	double p[] = { 
+				   MEFF_Sampling_Parameters.at(0), // Killer P
+				   MEFF_Sampling_Parameters.at(1), // Driver P
+				   MEFF_Sampling_Parameters.at(2), // Passenger P
+				   MEFF_Sampling_Parameters.at(3), // Deleterious P
+				   MEFF_Sampling_Parameters.at(4)  // Beneficial P
+				};
+
+	unsigned int number_of_mutations;
+
+	for(unsigned int j =0; j < std::get<2>(Dying_and_Newborn) ; j++)
+	{
+		Induce_Multiple_Mutations(number_of_mutations);
+		for(unsigned int i = 0; i < number_of_mutations; i++)
+		{
+			gsl_ran_multinomial ( r_global, 5, 1, p, buffer);
+			//std::cout << "K: " << buffer[0] << " Dr: " << buffer[1] << " P: " << buffer[2] << " DL: " << buffer[3] << " B: " << buffer[4] << std::endl;
+			if(buffer[0] > 0) // Killr mutation
+			{
+				Mutants_in_clone++;
+				Tumour -> at(ith_clone) -> Clonal_Mutations++;
+				//std::cout << "Killer Mutation " << std::endl;
+				break;
+			}
+			else if(buffer[1] > 0) //Driver mutation
+			{
+				Mutants_in_clone++;
+				Tumour -> at(ith_clone) -> Clonal_Mutations++;
+				//std::cout << "Driver Mutation " << std:: endl;
+				Carcinogenesis_From_Driver_V2( ith_clone, hours, years );
+				//getchar();
+				break;
+			}
+			else if(buffer[2] > 0)
+			{
+
+				//std::cout << "Passsenger Effect " << std::endl;
+				double Penalty;
+				Select_Passenger_Distribution( Penalty );
+				Tumour -> at(ith_clone) -> Clonal_Mutations++;
+				Tumour -> at(ith_clone) -> Clonal_Mutational_Burden += Penalty;
+				//double Beta_penalty = gsl_ran_beta (r_global, Passenger_Distribution_Parameters.at(0), Passenger_Distribution_Parameters.at(1));
+				
+				Tumour -> at(ith_clone) -> P_Expansion[1] -= Penalty;
+
+				if(Tumour -> at(ith_clone) -> P_Expansion[1] < 0.0)
+					Tumour -> at(ith_clone) -> P_Expansion[1] = 0.0;
+
+
+			}
+			else if(buffer[3] > 0)
+			{
+				//std::cout << "Deleterious Mutation " << std::endl;
+				double Penalty;
+				Select_Deleterious_distribution( Penalty );
+				Tumour -> at(ith_clone) -> Clonal_Mutations++;
+				Tumour -> at(ith_clone) -> Clonal_Mutational_Burden += Penalty;
+				//double Beta_penalty = gsl_ran_beta (r_global, Deleterious_Distribution_Parameters.at(0), Deleterious_Distribution_Parameters.at(1));
+				//double PR_t = Tumour -> at(ith_clone) -> P_Expansion[1];
+				
+				Tumour -> at(ith_clone) -> P_Expansion[1] -= Penalty;
+				if(Tumour -> at(ith_clone) -> P_Expansion[1] < 0.0)
+					Tumour -> at(ith_clone) -> P_Expansion[1] = 0.0;
+			}
+			else if (buffer[4] > 0)
+			{
+				//std::cout << "Beneficial Mutation " << std::endl;
+				double Penalty;
+				Select_Beneficial_distribution( Penalty );
+				Tumour -> at(ith_clone) -> Clonal_Mutations++;
+				Tumour -> at(ith_clone) -> Clonal_Mutational_Burden += Penalty;
+				//double Beta_gain = gsl_ran_beta (r_global, Beneficial_Distribution_Parameters.at(0), Beneficial_Distribution_Parameters.at(1));
+				//double PR_t = Tumour -> at(ith_clone) -> P_Expansion[1];
+				
+				Tumour -> at(ith_clone) -> P_Expansion[1] += Penalty;
+				if(Tumour -> at(ith_clone) -> P_Expansion[1] > 0.5)
+					Tumour -> at(ith_clone) -> P_Expansion[1] = 0.5;
+			}
+			else
+			{
+				std::cout << "NOT FOUND " << std::endl;
+			}
+		}
+	}
+
+	if(Mutants_in_clone > std::get<2>(Dying_and_Newborn) )
+		std::get<2>(Dying_and_Newborn) = 0;
+	else
+		std::get<2>(Dying_and_Newborn) -=  Mutants_in_clone;
+
+}
+
+
+void Clonal_Expansion::Select_Mutational_Effects_Distribution(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years, 
+															   std::tuple<unsigned long long int, 
+																			   unsigned long long int, 
+																			   unsigned long long int, 
+																			   bool, bool> & Dying_and_Newborn)
+{
+	switch(Mutational_Effects)
+	{
+		case 0:
+			//std::cout << "Send to Normal_gradient mutational effects " << std::endl;
+			Normal_Gradient_Mutational_Effect( ith_clone, Dying_and_Newborn, hours, years );
+			break;
+		case 1:
+			std::cout << "Send to Exponenetial " << std::endl;
+			break;
+		case 2:
+			std::cout << " Send to Double Beta " << std::endl;
+			break;
+		default:
+			std::cout << "Defualt case " << std::endl;
+			break;
+	}
+}
+
+
+void Clonal_Expansion::Select_Mitosis_Type(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years)
+{
+	switch(Mitosis)
+	{
+		case 0:
+			Dealyed_Mitosis_V1(ith_clone, hours, years);
+			break;
+		case 1:
+			std::cout << "Binomial " << std::endl;
+			break;
+		case 2:
+			std::cout << "Network " << std::endl;
+			break;
+		default:
+			Dealyed_Mitosis_V1(ith_clone, hours, years);
+			break;
+	}
 }
 
 void Clonal_Expansion::Select_Size_Dependant_Penalty(void)
@@ -219,6 +661,79 @@ void Clonal_Expansion::Select_Size_Dependant_Penalty(void)
  
  }
 
+void Clonal_Expansion::Select_PR_Samplig(const double & Parent_Proliferation_Rate, double & updated_PR)
+{
+
+	switch(PR_Sampling)
+	{
+		case 0:
+			r.Uniform_PR_Update( Parent_Proliferation_Rate, PR_Sampling_Parameters.at(0), updated_PR);
+			break;
+		case 1: 
+			std::cout << " Uniform V1 " << std::endl;
+			break;
+		case 2:
+			std::cout << " Beta " << std::endl;
+			break;
+		case 3:
+			std::cout << " Pareto " << std::endl;
+			break;
+		case 4:
+			std::cout << " Gamma " << std::endl;
+			break;
+		case 5:
+			std::cout << " Laplace " << std::endl;
+			break;
+		default:
+			std::cout << " Uniform " << std::endl;
+	}
+}
+
+void Clonal_Expansion::Select_MR_Sampling(const double & Parent_mu_rate, double & updated_MR)
+{
+	switch(MR_Sampling)
+	{
+		case 0:
+			std::cout << "Uniform " << std::endl;
+			break;
+		case 1:
+			//std::cout << " unfirom Gain " << std::endl;
+			r.Uniform_Gain_Update( Parent_mu_rate,  MR_Sampling_Parameters.at(0), updated_MR);
+			break;
+
+		case 2:
+			std::cout << " beta " << std::endl;
+			break;
+		default:
+			std::cout << " default " << std::endl; 
+	}
+
+}
+
+void Clonal_Expansion::Select_Penalty_Type(void)
+{
+
+	std::cout << Clonal_Expansion::SD_Penalty << "  penalty " << std::endl;
+
+	switch(SD_Penalty)
+	{
+		case 0:
+			std::cout << "Standard " << std::endl;
+		break;
+		case 1:
+		 	std::cout << "Mean " << std::endl;
+		 break;
+		 case 2:
+		 	std::cout<< " quartile " << std::endl;
+		 	break;
+		 default:
+		 	std::cout << "default " << std::endl;
+		 	break;
+	}
+}
+
+
+
 /**
 	Adds a parent clone with size 1 in the tumour.
 	Steps:
@@ -230,7 +745,6 @@ void Clonal_Expansion::carcinogenesis(void)
 {
 
 	// 1) Add a Clone
-	Random r;
 	// Adding a new clone
 	Tumour -> push_back ( get_Clone_DS () );  
 	Tumour -> back() -> Initiall_Expasion_Period = true;
@@ -253,7 +767,7 @@ void Clonal_Expansion::carcinogenesis(void)
 
 
 	Population_Size++;
-	mitosis = Clonal_Expansion::Standard; // Requires modification from input parameter
+	Mitosis = Clonal_Expansion::Delayed_V1; // Requires modification from input parameter
 	
 	std::cout << "\t\tC A R C I N O G E N E S I S" << std::endl;
 }
@@ -265,7 +779,7 @@ void Clonal_Expansion::carcinogenesis_V1(void)
 {
 	//std::cout << "Carcinogenesis Version 1 " << std::endl;
 	// 1) Add a Clone
-	Random r;
+	//Random r;
 	// Adding a new clone
 	Tumour -> push_back ( get_Clone_DS () );  
 	Tumour -> back() -> Initiall_Expasion_Period = true;
@@ -283,9 +797,41 @@ void Clonal_Expansion::carcinogenesis_V1(void)
 	Tumour -> back() -> Remaining_Time_in_M_Phase = 1;
 	Tumour -> back() -> Generation_ID_Counter = 0; 
 	Tumour -> back() -> Generation_ID = "P-0:0";
+	
+
+	Population_Size = Tumour -> back() -> Clone_Size;
+
+}
+
+void Clonal_Expansion::carcinogenesis_V2(void)
+{
+	//std::cout << "Carcinogenesis Version 1 " << std::endl;
+	// 1) Add a Clone
+	//Random r;
+	// Adding a new clone
+	Tumour -> push_back ( get_Clone_DS () );  
+	Tumour -> back() -> Initiall_Expasion_Period = true;
+	Tumour -> back() -> clone_extinct = false;
+	Tumour -> back() -> Clone_Size = 1;
+	Tumour -> back() -> In_G0_Phase = false;
+	Tumour -> back() -> In_G1_Phase = true;
+	Tumour -> back() -> In_S_Phase = false;
+	Tumour -> back() -> In_G2_Phase = false;
+	Tumour -> back() -> In_M_Phase = false;
+
+	Tumour -> back() -> Remaining_Time_in_G1_Phase = r.G1();
+	Tumour -> back() -> Remaining_Time_in_S_Phase = r.S();
+	Tumour -> back() -> Remaining_Time_in_G2_Phase = r.G2();
+	Tumour -> back() -> Remaining_Time_in_M_Phase = 1;
+	Tumour -> back() -> Generation_ID_Counter = 0; 
+	Tumour -> back() -> Generation_ID = "P-0:0";
+	Tumour -> back() -> Clonal_Mutations = 1;
+	Tumour -> back() -> Clonal_Mutational_Burden = 0.0;
+	Tumour -> back() -> max_PR = Tumour -> back() -> P_Expansion[1];
 
 	Population_Size = Tumour -> back() -> Clone_Size;
 }
+
 
 
 
@@ -329,14 +875,14 @@ void Clonal_Expansion::Generate_Clone_Generation_ID( std::string & newGeneration
 
 
 
-void Clonal_Expansion::carcinogenesis_from_driver(const unsigned int & ith_clone, const unsigned int & years, const unsigned int & hours, Random & r)
+void Clonal_Expansion::carcinogenesis_from_driver(const unsigned int & ith_clone, const unsigned int & years, const unsigned int & hours)
 {
 	
 
 	double mr = Tumour -> at( ith_clone ) -> Mutation_Rate;
 	unsigned int AC = Tumour -> at( ith_clone ) -> Driver_10_fold_accumulation;
 	//unsigned int Accumulated_Drivers = Tumour -> at( ith_clone ) -> Driver_10_fold_accumulation;
-	unsigned long long int NOM = Tumour -> at( ith_clone ) -> Number_of_Mutations;
+	//unsigned long long int NOM = Tumour -> at( ith_clone ) -> Number_of_Mutations;
 	double pr = Tumour -> at( ith_clone ) -> P_Expansion[1];
 
 	double p_st_g0 =  std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status );
@@ -368,7 +914,7 @@ void Clonal_Expansion::carcinogenesis_from_driver(const unsigned int & ith_clone
 	Tumour -> back() -> Generation_ID = cloneName;
 	Tumour -> back() -> Initiall_Expasion_Period = false;
 	Tumour -> back() -> Clone_Size = 1;
-	Tumour -> back() -> Number_of_Mutations = NOM + 1;
+	//Tumour -> back() -> Number_of_Mutations = NOM + 1;
 
 	Tumour -> back() -> Remaining_Time_in_G1_Phase = r.G1();
 	Tumour -> back() -> Remaining_Time_in_S_Phase = r.S();
@@ -440,7 +986,7 @@ void Clonal_Expansion::carcinogenesis_from_driver(const unsigned int & ith_clone
 *******************************************/
 void Clonal_Expansion::carcinogenesis(unsigned long long int &neoplastic_cells)
 {
-	Random r;
+	
 
 	Tumour -> push_back( get_Clone_DS() );
 	Tumour -> back() -> Clone_Size = neoplastic_cells;
@@ -461,7 +1007,7 @@ void Clonal_Expansion::carcinogenesis(unsigned long long int &neoplastic_cells)
 	Tumour -> back() -> max_PR = Tumour -> back() -> P_Expansion[P_Expansion_PR];
 
 	Population_Size = Tumour -> back() -> Clone_Size;
-	mitosis = Clonal_Expansion::Standard;
+	Mitosis = Clonal_Expansion::Delayed_V1;
 		
 	std::cout << "\t\tC A R C I N O G E N E S I S" << std::endl;
 }
@@ -524,7 +1070,7 @@ bool Clonal_Expansion::exiting_G2_phase( const unsigned int & ith_clone)
 /**
 	ith_Clone from G1 -> S phase
 ******************************************************/
-void Clonal_Expansion::Transition_From_G1_S(const unsigned int & ith_clone, Random & r)
+void Clonal_Expansion::Transition_From_G1_S(const unsigned int & ith_clone)
 {
 	Tumour -> at(ith_clone) -> In_G1_Phase  = false; 
 	Tumour -> at(ith_clone) -> Remaining_Time_in_G1_Phase = r.G1();
@@ -534,7 +1080,7 @@ void Clonal_Expansion::Transition_From_G1_S(const unsigned int & ith_clone, Rand
 /**
 	ith_Clone from S -> G2 phase
 ******************************************************/
-void Clonal_Expansion::Transition_From_S_G2( const unsigned int  & ith_clone, Random & r)
+void Clonal_Expansion::Transition_From_S_G2( const unsigned int  & ith_clone)
 {
 	Tumour -> at (ith_clone) -> In_S_Phase  = false; 
 	Tumour -> at (ith_clone) -> Remaining_Time_in_S_Phase = r.S();
@@ -544,7 +1090,7 @@ void Clonal_Expansion::Transition_From_S_G2( const unsigned int  & ith_clone, Ra
 /**
 	ith_Clone from G2 -> M phase
 ******************************************************/
-void Clonal_Expansion::Transition_From_G2_M(const unsigned int  & ith_clone, Random & r)
+void Clonal_Expansion::Transition_From_G2_M(const unsigned int  & ith_clone)
 {
 	Tumour -> at(ith_clone) -> In_G2_Phase  = false; 
 	Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase = r.G2();
@@ -560,13 +1106,12 @@ void Clonal_Expansion::Update_Population_After_Division_V1(const unsigned int  &
 	unsigned long long int cells_after_division = Tumour -> at (ith_clone) -> Clone_Size * 2;
 	Population_Size =  (Population_Size - Tumour -> at(ith_clone) -> Clone_Size ) + cells_after_division;
 	Tumour -> at(ith_clone) -> Clone_Size = cells_after_division;
-	//std::cout << "Population_Size: " << Population_Size << std::endl;
 }
 
 void Clonal_Expansion::Estimate_Mutational_Effects(unsigned int & Mutant_Cells, unsigned long long int & Clone_Size) //years and hours
 {
 
-	Random r;
+	
 
 	unsigned int cs = static_cast<unsigned int>(Clone_Size);
 	unsigned int * mutational_effect_buffer;
@@ -626,7 +1171,7 @@ void Clonal_Expansion::Check_for_Clonal_Extintion_at_min_size(const unsigned int
 
 
 
-void Clonal_Expansion::Update_Clonal_Mutational_Burden(const unsigned int & ith_clone, const unsigned int & Mutant_cells, const unsigned int & years, const unsigned int & hours, std::vector<unsigned int> & Mutations, Random & r )
+void Clonal_Expansion::Update_Clonal_Mutational_Burden(const unsigned int & ith_clone, const unsigned int & Mutant_cells, const unsigned int & years, const unsigned int & hours, std::vector<unsigned int> & Mutations )
 {
 	
 	unsigned int * mutational_effect_buffer;
@@ -671,7 +1216,7 @@ void Clonal_Expansion::Update_Clonal_Mutational_Burden(const unsigned int & ith_
 			else if(mutational_effect_buffer[DRIVER_CELLS] > 0)// Driver
 			{
 				std::cout << " DRIVER " << std::endl;
-				carcinogenesis_from_driver( ith_clone,  years,  hours, r );
+				carcinogenesis_from_driver( ith_clone,  years,  hours);
 				
 				//getchar();
 			}
@@ -759,7 +1304,7 @@ void Clonal_Expansion::Complementary_Probability( double & comp_probability_G0,
 
 
 // Update G0
-void Clonal_Expansion::Update_G0_Phase( const double & comp_probability_G0, const unsigned int & ith_clone, Random & r)
+void Clonal_Expansion::Update_G0_Phase( const double & comp_probability_G0, const unsigned int & ith_clone)
 {
 	unsigned int * G0_buffer = r.Update_G0_Phase( Tumour -> at( ith_clone ) -> G0_cells, 
 	 							std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G0_status ), 
@@ -772,7 +1317,7 @@ void Clonal_Expansion::Update_G0_Phase( const double & comp_probability_G0, cons
 }
 
 //Update G1
-void Clonal_Expansion::Update_G1_Phase(const double & comp_probability_G1, const unsigned int & ith_clone, Random & r)
+void Clonal_Expansion::Update_G1_Phase(const double & comp_probability_G1, const unsigned int & ith_clone)
 {
 	
 	unsigned int * G1_buffer = r.Update_G1_Phase( Tumour -> at( ith_clone ) -> G1_cells,
@@ -787,7 +1332,7 @@ void Clonal_Expansion::Update_G1_Phase(const double & comp_probability_G1, const
 }
 
 // Update G2
-void Clonal_Expansion::Update_G2_Phase( const double & comp_probability_G2, const unsigned int & ith_clone, Random & r)
+void Clonal_Expansion::Update_G2_Phase( const double & comp_probability_G2, const unsigned int & ith_clone)
 {
 	unsigned int * G2_buffer = r.Update_G2_Phase( Tumour -> at( ith_clone ) -> G2_cells,
 	  							   std::get<P_STAYING>( Tumour -> at( ith_clone ) -> G2_status ),
@@ -800,7 +1345,7 @@ void Clonal_Expansion::Update_G2_Phase( const double & comp_probability_G2, cons
 }
 
 //Update S
-void Clonal_Expansion::Update_S_Phase( const double & comp_probability_S, const unsigned int & ith_clone, Random & r)
+void Clonal_Expansion::Update_S_Phase( const double & comp_probability_S, const unsigned int & ith_clone)
 {
 	unsigned int *  S_buffer = r.Update_S_Phase( Tumour -> at( ith_clone ) -> S_cells,
 	  							std::get<P_STAYING>( Tumour -> at( ith_clone ) -> S_status ),
@@ -815,7 +1360,7 @@ void Clonal_Expansion::Update_S_Phase( const double & comp_probability_S, const 
 
 //Update M
 
-void Clonal_Expansion::Update_M_Phase( const double & comp_probability_M, const unsigned int & ith_clone, Random & r)
+void Clonal_Expansion::Update_M_Phase( const double & comp_probability_M, const unsigned int & ith_clone)
 {
 	unsigned int *  M_buffer = r.Update_M_Phase( Tumour -> at( ith_clone ) -> M_cells,
 	  							 std::get<P_STAYING>( Tumour -> at( ith_clone ) -> M_status),
@@ -832,7 +1377,7 @@ void Clonal_Expansion::Update_M_Phase( const double & comp_probability_M, const 
 //This can run in parallel 
 // Mitosis
 // https://www.youtube.com/watch?v=koudmJdil60
-void Clonal_Expansion::Check_Mitosis_Network_Status(const unsigned int & ith_clone, const unsigned int & years, const unsigned int & hours, Random & r )
+void Clonal_Expansion::Check_Mitosis_Network_Status(const unsigned int & ith_clone, const unsigned int & years, const unsigned int & hours )
 {
 	// All of this runs
 	//Random r;
@@ -871,11 +1416,11 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(const unsigned int & ith_clo
 	
 	// std::cout << "STATS G0 >  " <<  Tumour -> at( ith_clone ) -> G0_cells << std::endl;
 
-	 Update_G0_Phase( comp_probability_G0, ith_clone, r );
-	 Update_G1_Phase( comp_probability_G1, ith_clone, r );
-	 Update_G2_Phase( comp_probability_G2, ith_clone, r );
-	 Update_S_Phase(  comp_probability_S,  ith_clone, r );
-	 Update_M_Phase(  comp_probability_M, ith_clone, r );
+	 Update_G0_Phase( comp_probability_G0, ith_clone);
+	 Update_G1_Phase( comp_probability_G1, ith_clone);
+	 Update_G2_Phase( comp_probability_G2, ith_clone);
+	 Update_S_Phase(  comp_probability_S,  ith_clone);
+	 Update_M_Phase(  comp_probability_M, ith_clone);
 
 	 unsigned int AC_at_t = Tumour -> at( ith_clone ) -> Available_cells;
 	 unsigned int * Clonal_update_buffer = r.Clonal_Functions( Tumour -> at( ith_clone ) -> Available_cells,
@@ -1055,7 +1600,7 @@ void Clonal_Expansion::Check_Mitosis_Network_Status(const unsigned int & ith_clo
 	
 	//if( Division_Model[DIV_CELLS_MUTATING] >  0)
 	//{
-	 	Update_Clonal_Mutational_Burden( ith_clone, Division_Model[DIV_CELLS_MUTATING], years, hours, Mutations, r );
+	 	Update_Clonal_Mutational_Burden( ith_clone, Division_Model[DIV_CELLS_MUTATING], years, hours, Mutations);
 	//}
 
 	// //
@@ -1177,33 +1722,29 @@ void Clonal_Expansion::Reset_to_G1(const unsigned int & ith_clone)
 
 void Clonal_Expansion::Valid_Size_Heterogeneity_V1(const unsigned int & ith_clone)
 {
-	
 	if( Tumour -> at(ith_clone) -> Clone_Size >= Tumour -> at(ith_clone) -> Number_of_Memebers_to_Start_Heterogeneity)
 	{
 		Tumour -> at(ith_clone) ->  Initiall_Expasion_Period = false;		
 	}
-			
-	// Tumour -> at (ith_clone) -> In_M_Phase = false;
-	// Tumour -> at (ith_clone) -> In_G1_Phase = true;
 }
 
 
 // V1 Final version
 
-void Clonal_Expansion::Non_Mutagenic_Mitosis_Standard_V1(const unsigned int & ith_clone, Random & r)
+void Clonal_Expansion::Non_Mutagenic_Mitosis_Standard_V1(const unsigned int & ith_clone)
 {
 	if( check_G1_phase(ith_clone) )
 		Tumour -> at(ith_clone) -> Remaining_Time_in_G1_Phase--;
 	else if( exiting_G1_phase(ith_clone) )
-		Transition_From_G1_S(ith_clone, r);
+		Transition_From_G1_S(ith_clone);
 	else if( check_S_phase(ith_clone) )
 		Tumour -> at(ith_clone) -> Remaining_Time_in_S_Phase--;	
 	else if( exiting_S_phase(ith_clone) )
-		Transition_From_S_G2(ith_clone, r);
+		Transition_From_S_G2(ith_clone);
 	else if( check_G2_phase(ith_clone) )
 		Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase--;
 	else if( exiting_G2_phase(ith_clone) )
-		Transition_From_G2_M(ith_clone, r);
+		Transition_From_G2_M(ith_clone);
 	else if(Tumour -> at (ith_clone) -> In_M_Phase)
 	{
 		//std::cout << "SEND TO DIVISION MODEL " << std::endl;
@@ -1213,46 +1754,47 @@ void Clonal_Expansion::Non_Mutagenic_Mitosis_Standard_V1(const unsigned int & it
 	else
 	{
 		std::cout << "ERROR " << std::endl;
+		getchar();
 	}
 
 
 
 }
 
-void Clonal_Expansion::Checking_for_Mutants(std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn, Random & r, const unsigned int & ith_clone)
+void Clonal_Expansion::Checking_for_Mutants( std::tuple<unsigned long long int, // Dying
+													   unsigned long long int, // Newborn
+													   unsigned long long int, // Mutants
+													   bool, bool> & Dying_and_Newborn, 
+													   const unsigned int & ith_clone )
 {
-	unsigned int mutant_cells = 0;
+	std::get<2>(Dying_and_Newborn) = 0;
 
 	if(std::get<1>(Dying_and_Newborn) > 0)
 	{	
-		std::get<2>(Dying_and_Newborn) = r.Binomial_Mutants(
-															std::get<1>(Dying_and_Newborn),
-															Tumour -> at(ith_clone) -> Mutation_Rate
-														   );
-		// Announce that there are mutants
-		mutant_cells = std::get<2>(Dying_and_Newborn); // Mutant cells
-
-		//std::cout << "Mut Cells " << mutant_cells << std::endl;
+		r.Binomial_Mutant( Dying_and_Newborn, Tumour -> at(ith_clone) -> Mutation_Rate );
+		
 		std::get<3>(Dying_and_Newborn) =  true;// flag that indicates that there are mutant cells
-
 	
-		if(mutant_cells > std::get<1>(Dying_and_Newborn))
+		if(std::get<2>(Dying_and_Newborn) > std::get<1>(Dying_and_Newborn))
 		{
-			std::cout << "More mutant cells than newborn? " << " MC: " << mutant_cells << " NB: " << std::get<1>(Dying_and_Newborn) << std::endl;
+			std::cout << "More mutant cells than newborn? " << " MC: " << std::get<2>(Dying_and_Newborn)  << " NB: " << std::get<1>(Dying_and_Newborn) << std::endl;
 		}
 		else
 		{
-			std::get<1>(Dying_and_Newborn) -= mutant_cells;
+			std::get<1>(Dying_and_Newborn) -= std::get<2>(Dying_and_Newborn);
 		}
 	}
 
 }
 
-void Clonal_Expansion::Update_Newborn_Parameters_V1(const std::vector<unsigned int> & NewBorn_Cells, std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn)
+void Clonal_Expansion::Update_Newborn_Parameters_V1(const std::vector<unsigned long long int> & NewBorn_Cells, std::tuple<unsigned long long int, 
+																														  unsigned long long int, 
+																														  unsigned long long int, 
+																														  bool, bool> & Dying_and_Newborn)
 {
 
-	std::get<0>(Dying_and_Newborn) = NewBorn_Cells[0];// For Dying Clones 		
-	std::get<1>(Dying_and_Newborn) = NewBorn_Cells[1]; // For Newborn Clones 
+	std::get<0>(Dying_and_Newborn) = NewBorn_Cells.at(0);// For Dying Clones 		
+	std::get<1>(Dying_and_Newborn) = NewBorn_Cells.at(1); // For Newborn Clones 
 
 }
 
@@ -1265,10 +1807,14 @@ void Clonal_Expansion::Adjust_Feedback_PR(double & P_NB)
 }
 
 
-void Clonal_Expansion::Check_Clonal_Extinction_BCE_V1(const unsigned int & ith_clone, std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn)
+void Clonal_Expansion::Check_Clonal_Extinction_BCE_V1(const unsigned int & ith_clone, 
+													  std::tuple<unsigned long long int, // Dying 
+													  			 unsigned long long int, // Newborn
+													  			 unsigned long long int, // Mutant
+													  			 bool, bool> & Dying_and_Newborn)
 {
-	int o = (int) ( Tumour -> at(ith_clone) -> Clone_Size + std::get<1>(Dying_and_Newborn) ) - (int) (std::get<0>(Dying_and_Newborn) + std::get<2>(Dying_and_Newborn));
-	if(o <= 0)
+	bool extiction =  ( Tumour -> at(ith_clone) -> Clone_Size + std::get<1>(Dying_and_Newborn) ) < ( std::get<0>(Dying_and_Newborn) + std::get<2>(Dying_and_Newborn) ) ;
+	if( extiction )
 	{
 		Tumour -> at(ith_clone) -> clone_extinct = true;
 		std::get<4>(Dying_and_Newborn) =  false;
@@ -1285,7 +1831,7 @@ void Clonal_Expansion::Print_Debug_Carcinogeneisis_From_Driver(const unsigned in
 
 	std::cout << "ID: " << Tumour -> at(ith_clone) -> Generation_ID << " to " <<Tumour -> back() -> Generation_ID << std::endl;
 	std::cout << "CS: " << Tumour -> at(ith_clone) -> Clone_Size << " to " <<Tumour -> back() -> Clone_Size << std::endl;
-	std::cout << "NOM: " << Tumour -> at(ith_clone) -> Number_of_Mutations << " to " <<Tumour -> back() -> Number_of_Mutations << std::endl;
+	//std::cout << "NOM: " << Tumour -> at(ith_clone) -> Number_of_Mutations << " to " <<Tumour -> back() -> Number_of_Mutations << std::endl;
 	std::cout << "MR: " <<  Tumour -> at(ith_clone) -> Mutation_Rate << " to " <<Tumour -> back() -> Mutation_Rate << std::endl;
 	std::cout << "PR: " << Tumour -> at(ith_clone) -> P_Expansion[1] << " to " <<Tumour -> back() -> P_Expansion[1] << std::endl;
 
@@ -1295,26 +1841,30 @@ void Clonal_Expansion::Print_Debug_Carcinogeneisis_From_Driver(const unsigned in
 }
 
 
-void Clonal_Expansion::Carcinogenesis_From_Driver_V1(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years, Random & r)
+void Clonal_Expansion::Carcinogenesis_From_Driver_V1(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years)
 {
-	double mr = Tumour -> at(ith_clone) -> Mutation_Rate;
-	unsigned long long int NOM = Tumour -> at (ith_clone) -> Number_of_Mutations;
-	double pr = Tumour -> back() -> P_Expansion[1];
+	//double mr = Tumour -> at(ith_clone) -> Mutation_Rate;
+	//unsigned long long int NOM = Tumour -> at (ith_clone) -> Number_of_Mutations;
+	double Updated_pr = 0.0; 
+	double Updated_mr = 0.0;
+	//double pr = Tumour -> at(ith_clone) -> P_Expansion[1]; // with back gaves good results
 	
 	std::string cloneName = "";	
-	int Parent_Generation_ID_Counter = (int) Tumour -> at( ith_clone ) -> Generation_ID_Counter;
+	int Parent_Generation_ID_Counter = (int) Tumour -> at( ith_clone ) -> Generation_ID_Counter++;
 	Generate_Clone_Generation_ID(cloneName, 
 								 Parent_Generation_ID_Counter, 
 								 Tumour -> at( ith_clone ) -> Generation_ID,
 								 years, 
 								 hours);
+	//Tumour -> at(ith_clone) -> Generation_ID_Counter++;
 	//std::cout << "NID: " << cloneName << std::endl;
 
 	Tumour -> push_back( get_Clone_DS() );
 	Tumour -> back() -> Generation_ID = cloneName;
+	
 	Tumour -> back() -> Initiall_Expasion_Period = false;//true
 	Tumour -> back() -> Clone_Size = 1;
-	Tumour -> back() -> Number_of_Mutations = NOM + 1;
+	//Tumour -> back() -> Number_of_Mutations = NOM + 1;
 	
 	Tumour -> back() -> Remaining_Time_in_G1_Phase = r.G1();
 	Tumour -> back() -> Remaining_Time_in_S_Phase = r.S();
@@ -1329,8 +1879,16 @@ void Clonal_Expansion::Carcinogenesis_From_Driver_V1(const unsigned int & ith_cl
 
 	Tumour -> back() -> clone_extinct = false;
 	Tumour -> back() -> Generation_ID_Counter = 0; 
-	Tumour -> back() -> Mutation_Rate = r.Uniform_Mutation_Rate_2(mr);
-	Tumour -> back() -> P_Expansion[1] =  r.Update_Proliferation_Rate(pr);
+	
+	Select_MR_Sampling(Tumour -> at(ith_clone) -> Mutation_Rate, Updated_mr);
+	Tumour -> back() -> Mutation_Rate = Updated_mr;
+	//r.Uniform_Mutation_Rate_2(mr);
+	
+	Select_PR_Samplig(Tumour -> at(ith_clone) -> P_Expansion[1], Updated_pr);
+	Tumour -> back() -> P_Expansion[1] =  Updated_pr;
+
+	//r.Update_Proliferation_Rate(pr);
+	
 	Tumour -> back() -> Number_of_Memebers_to_Start_Heterogeneity = 1;
 	Population_Size++;
 	
@@ -1338,98 +1896,249 @@ void Clonal_Expansion::Carcinogenesis_From_Driver_V1(const unsigned int & ith_cl
 
 }
 
-void Clonal_Expansion::Mutant_Effects_V1(const unsigned int & ith_clone, const std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn,  const unsigned int & hours, const unsigned int & years, Random & r)
-{
-	//std::cout << "Driver Mutant " << std::endl;
-	unsigned int i =0;
 
-	for( i = 0; i < std::get<2>(Dying_and_Newborn); i++)
-		Carcinogenesis_From_Driver_V1( ith_clone, hours, years, r);
+
+void Clonal_Expansion::Carcinogenesis_From_Driver_V2(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years)
+{
+	//double mr = Tumour -> at(ith_clone) -> Mutation_Rate;
+	//unsigned long long int NOM = Tumour -> at (ith_clone) -> Number_of_Mutations;
+	double Updated_pr = 0.0; 
+	double Updated_mr = 0.0;
+	//double pr = Tumour -> at(ith_clone) -> P_Expansion[1]; // with back gaves good results
+	unsigned long long int number_of_mutations = Tumour -> at(ith_clone) -> Clonal_Mutations;
+	double mut_burden = Tumour -> at(ith_clone) -> Clonal_Mutational_Burden;
+	std::string cloneName = "";	
+	int Parent_Generation_ID_Counter = (int) Tumour -> at( ith_clone ) -> Generation_ID_Counter;
+	Generate_Clone_Generation_ID(cloneName, 
+								 Parent_Generation_ID_Counter, 
+								 Tumour -> at( ith_clone ) -> Generation_ID,
+								 years, 
+								 hours);
+	//std::cout << "NID: " << cloneName << std::endl;
+	Tumour -> at(ith_clone) -> Generation_ID_Counter++;
+	Tumour -> push_back( get_Clone_DS() );
+	Tumour -> back() -> Generation_ID = cloneName;
+	Tumour -> back() -> Initiall_Expasion_Period = false;//true
+	Tumour -> back() -> Clone_Size = 1;
+	//Tumour -> back() -> Number_of_Mutations = NOM + 1;
+	
+	Tumour -> back() -> Remaining_Time_in_G1_Phase = r.G1();
+	Tumour -> back() -> Remaining_Time_in_S_Phase = r.S();
+	Tumour -> back() -> Remaining_Time_in_G2_Phase = r.G2();
+	Tumour -> back() -> Remaining_Time_in_M_Phase = 1;
+
+	Tumour -> back() -> In_G0_Phase = false;
+	Tumour -> back() -> In_G1_Phase = true;
+	Tumour -> back() -> In_S_Phase = false;
+	Tumour -> back() -> In_G2_Phase = false;
+	Tumour -> back() -> In_M_Phase = false;
+
+	Tumour -> back() -> clone_extinct = false;
+	Tumour -> back() -> Generation_ID_Counter = 0; 
+	
+	Select_MR_Sampling(Tumour -> at(ith_clone) -> Mutation_Rate, Updated_mr);
+	Tumour -> back() -> Mutation_Rate = Updated_mr;
+	Tumour -> back() -> Clonal_Mutations = number_of_mutations;
+	Tumour -> back() -> Clonal_Mutational_Burden = mut_burden;
+	//r.Uniform_Mutation_Rate_2(mr);
+	
+	//Select_PR_Samplig(Tumour -> at(ith_clone) -> P_Expansion[1], Updated_pr);
+	r.Update_Proliferation_Rate_V2( Tumour -> at(ith_clone) -> P_Expansion[1], Updated_pr );
+	Tumour -> back() -> P_Expansion[1] =  Updated_pr;
+	Tumour -> back() -> max_PR = Tumour -> back() -> P_Expansion[1];
+
+	//r.Update_Proliferation_Rate(pr);
+	
+
+	Tumour -> back() -> Number_of_Memebers_to_Start_Heterogeneity = 1;
+	Population_Size++;
+	
+	//Print_Debug_Carcinogeneisis_From_Driver( ith_clone );
+
 }
 
-void Clonal_Expansion::Apply_Penalties_to_Mutants_V1(const unsigned int & ith_clone, const std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn, const unsigned int & hours, const unsigned int & years, Random & r)
+
+void Clonal_Expansion::Mutant_Effects_V1(const unsigned int & ith_clone, const unsigned long long int & Mutant_Cells,  const unsigned int & hours, const unsigned int & years)
 {
 	
-	if( std::get<3>(Dying_and_Newborn) && std::get<2>(Dying_and_Newborn) > 0 )
+	unsigned int i =0;
+	for( i = 0; i < Mutant_Cells; i++)
+		Carcinogenesis_From_Driver_V1( ith_clone, hours, years);
+}
+
+void Clonal_Expansion::Apply_Penalties_to_Mutants_V1(const unsigned int & ith_clone, const std::tuple<unsigned long long int, 
+																									  unsigned long long int, 
+																									  unsigned long long int, 
+																									  bool, bool> & Dying_and_Newborn, const unsigned int & hours, const unsigned int & years)
+{
+	
+	if( std::get<3>(Dying_and_Newborn) && (std::get<2>(Dying_and_Newborn) > 0) )
 	{
-		Mutant_Effects_V1(ith_clone, Dying_and_Newborn, hours, years, r);
+		Mutant_Effects_V1(ith_clone, std::get<2>(Dying_and_Newborn), hours, years);
 	}
 
-	unsigned int New_poulation_Size = ( Tumour -> at(ith_clone) -> Clone_Size  - std::get<0>(Dying_and_Newborn) ) 
-										+ 	std::get<1>(Dying_and_Newborn) ;
+	unsigned long long int New_poulation_Size = ( Tumour -> at(ith_clone) -> Clone_Size  - std::get<0>(Dying_and_Newborn) ) 
+										      + 	std::get<1>(Dying_and_Newborn) ;
 
 		// Update population size by
 		// Pop size =Pop_Size + (CS[t] - CS[t-1]) 
-		Population_Size +=  ( static_cast<unsigned long long int>(New_poulation_Size) - Tumour  -> at(ith_clone) -> Clone_Size) ;
-		Tumour -> at(ith_clone) -> Clone_Size = static_cast<unsigned long long int>(New_poulation_Size) ;
+		Population_Size +=  New_poulation_Size - Tumour  -> at(ith_clone) -> Clone_Size ;
+		Tumour -> at(ith_clone) -> Clone_Size = New_poulation_Size ;
 }
 
-void Clonal_Expansion::Update_Mutant_Mutational_Effects(const unsigned int & ith_clone, Random & r, const unsigned int & hours, const unsigned int & years, const std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn)
+
+//Mutant effects
+// void Clonal_Expansion::Mutational_Effects_V2(const unsigned int & ith_clone, const std::tuple<unsigned long long int,
+// 																							  unsigned long long int,
+// 																							  unsigned long long int,
+// 																							  bool, bool> & Dying_and_Newborn, const unsigned int & hours, const unsigned int & years)
+// {
+
+// }
+
+
+void Clonal_Expansion::Apply_Penalties_to_Mutants_V2(const unsigned int & ith_clone,  std::tuple<unsigned long long int, 
+																								 unsigned long long int, 
+																								 unsigned long long int, 
+																								 bool, bool> & Dying_and_Newborn, const unsigned int & hours, const unsigned int & years)
+{
+	if( std::get<3>(Dying_and_Newborn) && (std::get<2>(Dying_and_Newborn) > 0) )
+	{
+		//std::cout << "To mutational Effects We have " << std::get<2>(Dying_and_Newborn) << " mutant cells " << std::endl;
+		Select_Mutational_Effects_Distribution(ith_clone, hours, years, Dying_and_Newborn);
+		// select mutanional effects distribution
+		//Select_Penalty_Type();
+		//getchar();
+		//select penalty type
+	}
+
+	unsigned long long int New_poulation_Size = ( Tumour -> at(ith_clone) -> Clone_Size  - std::get<0>(Dying_and_Newborn) ) 
+										      + 	(std::get<1>(Dying_and_Newborn) -  std::get<2>(Dying_and_Newborn) ) ;
+
+	// Update population size by
+	// Pop size =Pop_Size + (CS[t] - CS[t-1]) 
+	Population_Size +=  New_poulation_Size - Tumour  -> at(ith_clone) -> Clone_Size ;
+	Tumour -> at(ith_clone) -> Clone_Size = New_poulation_Size ;
+
+}
+
+void Clonal_Expansion::Update_Mutant_Mutational_Effects_V1(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years, const std::tuple<unsigned long long int, 
+																																								 unsigned long long int, 
+																																								 unsigned long long int, 
+																																								 bool, bool> & Dying_and_Newborn)
+{
+
+	if(std::get<4>(Dying_and_Newborn))
+		Apply_Penalties_to_Mutants_V1( ith_clone, Dying_and_Newborn, hours,  years);
+		
+}
+
+
+void Clonal_Expansion::Update_Mutant_Mutational_Effects_V2(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years,  std::tuple<unsigned long long int, 
+																																								 unsigned long long int, 
+																																								 unsigned long long int, 
+																																								 bool, bool> & Dying_and_Newborn)
 {
 
 	if(std::get<4>(Dying_and_Newborn))
 	{
-		//compute_Mutations(CE, Generation_ID, Dying_and_Newborn, years, hours );
-		
-		Apply_Penalties_to_Mutants_V1( ith_clone, Dying_and_Newborn, hours,  years,  r);
-		
+		Apply_Penalties_to_Mutants_V2( ith_clone,  Dying_and_Newborn,  hours,  years );	
 	}
+		
 }
 
-void Clonal_Expansion::Basic_Clonal_Expansion_V1(const unsigned int & ith_clone, std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> & Dying_and_Newborn, Random & r)
+
+
+void Clonal_Expansion::Basic_Clonal_Expansion_V1(const unsigned int & ith_clone, std::tuple<unsigned long long int, 
+																							unsigned long long int, 
+																							unsigned long long int, bool, bool> & Dying_and_Newborn)
 {
-	std::vector<unsigned int> NewBorn_Cells;
+	std::vector<unsigned long long int> NewBorn_Cells;
 	
 	//1) Let's get basline parameters
 	double P_DR =  Tumour -> at(ith_clone) -> P_Expansion[0];
 	double P_NB =  Tumour -> at(ith_clone) -> P_Expansion[1];
 	//2) Apply enviromental penalty to growth variables
 	Adjust_Feedback_PR(P_NB);
-	//3) Adjust Probability Mass
-	double P_NT =  1.0 - (P_DR + P_NB );
+	r.Basic_Clonal_Expansion_Sampling_V1_HPC(Tumour -> at (ith_clone) -> Clone_Size, P_DR, P_NB, NewBorn_Cells);
 
-	r.Basic_Clonal_Expansion_Sampling_V1( Tumour -> at (ith_clone) -> Clone_Size, P_DR, P_NB, P_NT, NewBorn_Cells);
+	//std::cout<< NewBorn_Cells.at(0) << " " << NewBorn_Cells.at(1) << " " << NewBorn_Cells.at(2) << " T: " << NewBorn_Cells.at(0) + NewBorn_Cells.at(1)+ NewBorn_Cells.at(2)  <<std::endl;
 
 	Update_Newborn_Parameters_V1(NewBorn_Cells, Dying_and_Newborn);
-
-	Checking_for_Mutants( Dying_and_Newborn, r, ith_clone );
-
+	Checking_for_Mutants( Dying_and_Newborn, ith_clone );
 	Check_Clonal_Extinction_BCE_V1( ith_clone, Dying_and_Newborn );
 	
 }
 
-
-
-void Clonal_Expansion::Dealyed_Mitosis_V1(const unsigned int & ith_clone, Random & r, const unsigned int & hours, const unsigned int & years)
+void Clonal_Expansion::Clonal_Extinction_From_Size(const unsigned int & ith_clone)
 {
-	
-	std::tuple<unsigned int, unsigned int, unsigned int, bool, bool> Dying_and_Newborn (0, 0, 0, false, true);
-
-	if( check_G1_phase(ith_clone) )
-		Tumour -> at(ith_clone) -> Remaining_Time_in_G1_Phase--;
-	else if( exiting_G1_phase(ith_clone) )
-		Transition_From_G1_S(ith_clone, r);
-	else if( check_S_phase(ith_clone) )
-		Tumour -> at(ith_clone) -> Remaining_Time_in_S_Phase--;	
-	else if( exiting_S_phase(ith_clone) )
-		Transition_From_S_G2(ith_clone, r);
-	else if( check_G2_phase(ith_clone) )
-		Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase--;
-	else if( exiting_G2_phase(ith_clone) )
-		Transition_From_G2_M(ith_clone, r);
-	else if(Tumour -> at (ith_clone) -> In_M_Phase)
-	{
-		Basic_Clonal_Expansion_V1(ith_clone, Dying_and_Newborn, r);
-		Update_Mutant_Mutational_Effects(ith_clone,  r,  hours, years, Dying_and_Newborn);
-		Reset_to_G1(ith_clone);
-	
-	}
+	if(Tumour -> at(ith_clone) -> Clone_Size == 0)
+		Tumour-> at(ith_clone) -> clone_extinct = true;
 
 }
 
 
+void Clonal_Expansion::Dealyed_Mitosis_V1(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years)
+{
+	
+	std::tuple<unsigned long long int, 
+			   unsigned long long int, 
+			   unsigned long long int, bool, bool> Dying_and_Newborn (0, 0, 0, false, true);
 
-void Clonal_Expansion::Update_Population_V1(unsigned int & hours, unsigned int & years, Random & r)
+	if( check_G1_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_G1_Phase--;
+	else if( exiting_G1_phase(ith_clone) )
+		Transition_From_G1_S(ith_clone);
+	else if( check_S_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_S_Phase--;	
+	else if( exiting_S_phase(ith_clone) )
+		Transition_From_S_G2(ith_clone);
+	else if( check_G2_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase--;
+	else if( exiting_G2_phase(ith_clone) )
+		Transition_From_G2_M(ith_clone);
+	else if(Tumour -> at (ith_clone) -> In_M_Phase)
+	{
+		Basic_Clonal_Expansion_V1(ith_clone, Dying_and_Newborn);
+		Update_Mutant_Mutational_Effects_V1(ith_clone,  hours, years, Dying_and_Newborn);
+		Clonal_Extinction_From_Size(ith_clone);
+		Reset_to_G1(ith_clone);
+	}
+
+}
+
+//modify this ^ for version 2
+
+void Clonal_Expansion::Dealyed_Mitosis_V2(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years)
+{
+	std::tuple<unsigned long long int, 
+			   unsigned long long int, 
+			   unsigned long long int, bool, bool> Dying_and_Newborn (0, 0, 0, false, true);
+
+	if( check_G1_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_G1_Phase--;
+	else if( exiting_G1_phase(ith_clone) )
+		Transition_From_G1_S(ith_clone);
+	else if( check_S_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_S_Phase--;	
+	else if( exiting_S_phase(ith_clone) )
+		Transition_From_S_G2(ith_clone);
+	else if( check_G2_phase(ith_clone) )
+		Tumour -> at(ith_clone) -> Remaining_Time_in_G2_Phase--;
+	else if( exiting_G2_phase(ith_clone) )
+		Transition_From_G2_M(ith_clone);
+	else if(Tumour -> at (ith_clone) -> In_M_Phase)
+	{
+		Basic_Clonal_Expansion_V1(ith_clone, Dying_and_Newborn);
+		Update_Mutant_Mutational_Effects_V2(ith_clone, hours, years, Dying_and_Newborn);
+		Clonal_Extinction_From_Size(ith_clone);
+		Reset_to_G1(ith_clone);
+	}
+
+}
+
+//select mitosis type
+void Clonal_Expansion::Update_Population_V2(const unsigned int & hours, const unsigned int & years)
 {
 	unsigned int ith_clone = 0;
 	unsigned int number_of_clones = Tumour -> size();
@@ -1440,94 +2149,757 @@ void Clonal_Expansion::Update_Population_V1(unsigned int & hours, unsigned int &
 		{
 			if( Tumour -> at (ith_clone) -> Initiall_Expasion_Period )
 			{
-				Non_Mutagenic_Mitosis_Standard_V1(ith_clone, r);
+				Non_Mutagenic_Mitosis_Standard_V1(ith_clone);
 			}
 			else
 			{
-				Dealyed_Mitosis_V1(ith_clone, r, hours, years);	
+				Dealyed_Mitosis_V2( ith_clone, hours, years );
 			}
 		}
+	}
+
+
+}
+
+
+void Clonal_Expansion::Update_Population_V1(const unsigned int & hours, const unsigned int & years)
+{
+	unsigned int ith_clone = 0;
+	unsigned int number_of_clones = Tumour -> size();
+
+	for(ith_clone = 0; ith_clone < number_of_clones ; ith_clone++)
+	{
+		if(!Tumour -> at (ith_clone) -> clone_extinct)// if not extinct
+		{
+			if( Tumour -> at (ith_clone) -> Initiall_Expasion_Period )
+			{
+				Non_Mutagenic_Mitosis_Standard_V1(ith_clone); // Change name
+			}
+			else
+			{
+				Select_Mitosis_Type( ith_clone, hours, years );
+				//Dealyed_Mitosis_V1(ith_clone, hours, years);	// choose mitosis component 
+			}
+		}
+		// else
+		// {
+		// 	std::cout << "Skiping clone " << ith_clone << std::endl;
+		// }
 	
 	}//for
 }
 
 
 
-void Clonal_Expansion::print_Status( const unsigned int & hours, const unsigned int & years,  const bool & each_100)
+void Clonal_Expansion::print_Status( const unsigned int & hours, const unsigned int & years,  const bool & each_100, int & myID)
 {
-	if(each_100 && (hours % 100 == 0))
+	if(each_100 && (hours % 1000 == 0))
 	{	
-		
-		std::cout << " \n\n [ALIVE CELLS]: " <<  Population_Size  
+		usleep( (myID*1) + 10);
+		std::cout << "ID: " << myID << " [ALIVE CELLS]: " <<  Population_Size  
 			 << " [CLONES]: " << Tumour -> size() 
 			 << "   H: " << hours  
 			 << " Y: " << years 
 			 << " FD: " << feedback  
 			 << std::endl;
+	}
+	//else
+	//{
+	//	usleep( (myID*1) + 10);
+	//	std::cout<< "ID: " <<myID << " [ALIVE CELLS]: " <<  Population_Size  
+	//		 << " [CLONES]: " << Tumour -> size() 
+	//		 << "   H: " << hours  
+	//		 << " Y: " << years 
+	//		 << " FD: " << feedback  
+	//		 << std::endl;
+	//}
+
+}
+
+void Clonal_Expansion::Get_Competitive_Clonal_Size(unsigned int & Effective_Tumour_Size )
+{
+	if(Tumour -> size() > 1 )
+	{
+		for (unsigned int ith_clone = 0; ith_clone < Tumour -> size() ; ith_clone++)
+		{
+			if(Tumour -> at (ith_clone) -> Clone_Size > 100)
+				Effective_Tumour_Size++;
+		}
+	}
+	else if(Tumour -> size() == 1)
+	{
+		Effective_Tumour_Size = 1;
 	}
 	else
 	{
-		std::cout << " \n\n [ALIVE CELLS]: " <<  Population_Size  
-			 << " [CLONES]: " << Tumour -> size() 
-			 << "   H: " << hours  
-			 << " Y: " << years 
-			 << " FD: " << feedback  
-			 << std::endl;
+		Effective_Tumour_Size = 0;
 	}
+}
+
+void Clonal_Expansion::Write_To_File( std::ofstream & te_file, unsigned long long int & elapsed_hours)
+{
+
+	unsigned int Effective_Tumour_Size = 0;
+	Get_Competitive_Clonal_Size( Effective_Tumour_Size );
+	te_file << Population_Size << "\t" << elapsed_hours << "\t"<< Effective_Tumour_Size   << "\n";
+	elapsed_hours++;
 
 }
 
 
+void Clonal_Expansion::Update_Hours(unsigned int & hours, unsigned int & years)
+{
+	if(hours == 8764)//8764
+	{
+		hours = 0; years ++;
+	}
+}
+
+void Clonal_Expansion::Write_Final_Population_Sattus_V1( const std::string & data_path)
+{
+	std::ofstream clonal_data;
+	std::string fname =  data_path + "V1_Final_Population.txt";
+	clonal_data.open(fname);
+	clonal_data << "Generation_ID" << "\tClone_Size" << "\tMutation_Rate" << "\tProliferation_Rate" << std::endl;
+
+	for (unsigned int ith_clone = 0; ith_clone < Tumour -> size() ; ith_clone++)
+	{
+		clonal_data 
+		<< Tumour -> at( ith_clone ) -> Generation_ID << "\t" 
+		<< Tumour -> at (ith_clone) -> Clone_Size  << "\t" 
+		<< Tumour -> at (ith_clone) -> Mutation_Rate << "\t" 
+		<< Tumour -> at (ith_clone) -> P_Expansion[1] << std::endl;
+		
+	}
+	clonal_data.close();
+
+}
+
+void Clonal_Expansion::Write_Final_Population_Sattus_V2( const std::string & data_path)
+{
+	std::ofstream clonal_data;
+	std::string fname =  data_path + "V2_Final_Population.txt";
+	clonal_data.open(fname);
+	clonal_data << "Generation_ID" << "\tClone_Size" << "\tMutation_Rate" << "\tProliferation_Rate" << "\tMutations" << "\tBurden" << "\tMax_PR" <<std::endl;
+
+	for (unsigned int ith_clone = 0; ith_clone < Tumour -> size() ; ith_clone++)
+	{
+		clonal_data 
+		<< Tumour -> at( ith_clone ) -> Generation_ID << "\t" 
+		<< Tumour -> at (ith_clone) -> Clone_Size  << "\t" 
+		<< Tumour -> at (ith_clone) -> Mutation_Rate << "\t" 
+		<< Tumour -> at (ith_clone) -> P_Expansion[1] << "\t" 
+		<< Tumour -> at (ith_clone) -> Clonal_Mutations << "\t"
+		<< Tumour -> at (ith_clone) -> Clonal_Mutational_Burden << "\t"
+		<< Tumour -> at (ith_clone) -> max_PR
+		<< std::endl;
+		
+	}
+	clonal_data.close();
+}
+
 
 // Load all properties function
-
-//this will become the main
-void Clonal_Expansion::Compute_Tumour_Growth_V1(const std::map<std::string, std::string> &logic)
+void Clonal_Expansion::Write_Tumour_Evolution(const unsigned long long int & elapsed_hours, const std::string & data_path)
 {
-	//finalise initilisasing parameters
-	
+
+	std::ofstream clonal_data;
+	std::string fname =  data_path + "t_" + std::to_string( elapsed_hours ) + ".txt";
+	clonal_data.open(fname);
+	//clonal_data << "Generation_ID" << "\tClone_Size" << "\tMutation_Rate" << "\tProliferation_Rate" << std::endl;
+	for (unsigned int ith_clone = 0; ith_clone < Tumour -> size() ; ith_clone++)
+	{
+		if( !Tumour -> at(ith_clone) -> clone_extinct && (Tumour -> at(ith_clone) -> Clone_Size > 100) )
+		{
+			clonal_data 
+			<< Tumour -> at( ith_clone ) -> Generation_ID << "\t" 
+			<< Tumour -> at (ith_clone) -> Clone_Size  << "\t" 
+			<< Tumour -> at (ith_clone) -> Mutation_Rate << "\t" 
+			<< Tumour -> at (ith_clone) -> P_Expansion[1] << std::endl;
+		}
+	}
+	clonal_data.close();
+}
+
+void Clonal_Expansion::Stop_Gowth_Condition_Counter(unsigned int & stop_growth_counter, const unsigned int & _STOP_AFTER_DIAGNOSIS_COUNTER, const unsigned long long int & _DETECTABLE_POPULATION_SIZE )
+{
+	if(Population_Size > _DETECTABLE_POPULATION_SIZE)
+	{
+		stop_growth_counter++;
+
+	}
+
+}
+
+void Clonal_Expansion::set_Penalty_Max_Pop_Size(const unsigned long long int _MAXIMUM_POPULATION_SIZE_GROWTH)
+{
+	Penalty_Max_Population_Size = (double) _MAXIMUM_POPULATION_SIZE_GROWTH;
+}
+
+void Clonal_Expansion::set_PR_DR_Difference(void)
+{
+	PR_DR_Difference =  Tumour -> at(0) -> P_Expansion[1] - Tumour -> at(0) -> P_Expansion[0];
+
+}
+
+void Clonal_Expansion::Create_Folder_TE(const std::string & data_path)
+{
+	std::cout << "NEED TO CREATE FOLDER " << std::endl;
+    mkdir(data_path.c_str(), ACCESSPERMS);
+    std::cout << "Folder Exists " << FolderExists(data_path) << std::endl;
+}
+
+void Clonal_Expansion::Check_Data_Path_Folder_Creation(const std::string & data_path)
+{
+	if( FolderExists(data_path) )
+    	std::cout << "FOLDER " << data_path << " EXISTS AND VALID" << std::endl;
+    else
+    	Create_Folder_TE(data_path);
+    
+}
+
+void Clonal_Expansion::Create_TimeStamp_Path( std::string & data_path )
+{
+	std::time_t result = std::time(nullptr);
+	std::string timestamp = std::asctime(std::localtime(&result));
+	std::cout << timestamp << std::endl;
+	data_path = data_path + "/" + ReplaceAll(timestamp, " ", "_") ;
+	data_path = ReplaceAll(data_path, "\n", "");
+	data_path = ReplaceAll(data_path, ":", "_");
+	trim(data_path);
+	data_path = data_path + "/";
+    std::cout <<" New path: " << data_path  << std::endl;
+
+}
+
+void Clonal_Expansion::setVersion_Folder( std::string & data_path, const std::map<std::string, std::string> &logic )
+{
+
+	std::cout << " Folder Data exists " << std::endl;
+	data_path = data_path +  "/" + logic.at("Version");
+	std::cout << "Ver path " << data_path << std::endl;
+	if( FolderExists(data_path) )
+	{
+		Create_TimeStamp_Path( data_path );
+    	Check_Data_Path_Folder_Creation( data_path );
+    			
+	}
+	else
+	{
+		std::cout << "ERROR: " << data_path << " DOES NOT EXIST (Validate within the function)" << std::endl;
+	}
+
+}
+
+void Clonal_Expansion::setTumour_Evolution_Folder(std::string & data_path, const std::map<std::string, std::string> &logic )
+{
+	char CWD[1024];
+ 	const std::string core_path = std::string(
+               		            		 dirname(
+                    	            	    dirname(
+                        	            	    getcwd( CWD, sizeof(CWD) )
+                            	            	    )
+                                				)
+                          					);
+
+	std::cout << "PATH: " << core_path << std::endl;
+	std::vector<std::string> path_tokens =  split (core_path, '/');
+	if( path_tokens.at(path_tokens.size()-1) =="core" )
+	{
+		std::cout << "TRUE " << std::endl;
+		data_path = core_path + "/Data";
+		std::cout << data_path << std::endl; 
+
+		if(FolderExists( data_path ) )
+			setVersion_Folder( data_path, logic );
+		else
+			std::cout << "ERROR: " << data_path << " INVALID PATH" << std::endl;
+
+	}
+
+}
+
+//////////////////////// **** CONFIGURATION SECTION **** /////////////////////////
+
+void Clonal_Expansion::Logic_File_Kernel_Configurations_V2(const std::map<std::string, std::string> &logic, bool & print_time_step, bool & write_tumour_evolution, bool & each_100)
+{
 	setSD_Penalty(logic.at("Penalty"));
-	std::cout << "Penlaty type " << getSD_Penalty() << std::endl;
-	std::cout << "PRINT TS: " << logic.at("Print_TS") << std::endl;
-	bool print_time_step = false;
+	setMistosis_type(logic.at("Mitosis"));
+
 	if(logic.at("Print_TS") == "true")
 		print_time_step = true;
 
-	std::cout << "PRINT TS: " << print_time_step << std::endl;
+	if( logic.at("Print_TS.Each_100") == "true" )
+		each_100 = true;
+
+	if(logic.at("Write_Tumour_Evolution") == "true" )
+		write_tumour_evolution = true;
+
+	std::cout << "Mutiple Mutations " << logic.at("Multiple_Mutations") << " " << Multiple_Mutations<< std::endl;
+	if(logic.at("Multiple_Mutations") == "true")
+		Multiple_Mutations = true;
+
+	std::cout << "Mutiple Mutations " << Multiple_Mutations << std::endl;
+}
+
+void Clonal_Expansion::Logic_File_Kernel_Configurations_V1(const std::map<std::string, std::string> &logic, bool & print_time_step, bool & write_tumour_evolution, bool & each_100)
+{
+	setSD_Penalty(logic.at("Penalty"));
+	setMistosis_type(logic.at("Mitosis"));
+
+	if(logic.at("Print_TS") == "true")
+		print_time_step = true;
+
+	if( logic.at("Print_TS.Each_100") == "true" )
+		each_100 = true;
+
+	if(logic.at("Write_Tumour_Evolution") == "true" )
+		write_tumour_evolution = true;	
+}
+
+
+void Clonal_Expansion::Setting_Population_Parameters(const std::map<std::string, std::string> &logic, 
+													 unsigned long long int & _MAXIMUM_POPULATION_SIZE_GROWTH, 
+													 unsigned long long int & _DETECTABLE_POPULATION_SIZE,
+													 unsigned int & _STOP_AFTER_DIAGNOSIS_COUNTER )
+{
+	if ( logic.find("MAXIMUM_POPULATION_SIZE_GROWTH") == logic.end() ) 
+	{ // not found
+ 		 std::cout << "NOT FOUND " << std::endl;
+ 		 _MAXIMUM_POPULATION_SIZE_GROWTH = MAXIMUM_POPULATION_SIZE;
+	} 
+	else 
+	{ // found
+  		std::cout << "POP GROWTH " << logic.at("MAXIMUM_POPULATION_SIZE_GROWTH") << std::endl;
+  		_MAXIMUM_POPULATION_SIZE_GROWTH  = std::stoull(logic.at("MAXIMUM_POPULATION_SIZE_GROWTH"));
+  		std::cout << "POP G UL: " << _MAXIMUM_POPULATION_SIZE_GROWTH << std::endl;
+	}
+
+	if( logic.find("MAXIMUM_POPULATION_SIZE_GROWTH") == logic.end() )
+	{
+		 std::cout << "NOT FOUND " << std::endl;
+		 _DETECTABLE_POPULATION_SIZE = DETECTABLE_POPULATION_SIZE;
+	}
+	else
+	{
+		_DETECTABLE_POPULATION_SIZE = std::stoull(logic.at("DETECTABLE_POPULATION_SIZE"));
+		std::cout << "POP G UL: " << _DETECTABLE_POPULATION_SIZE << std::endl;
+	}
+
+	if(logic.find("STOP_AFTER_DIAGNOSIS_COUNTER") == logic.end())
+	{
+		std::cout << "NOT FOUND " << std::endl;
+		_STOP_AFTER_DIAGNOSIS_COUNTER = STOP_AFTER_DIAGNOSIS_COUNTER;
+	}
+	else
+	{
+		_STOP_AFTER_DIAGNOSIS_COUNTER = std::stoull(logic.at("STOP_AFTER_DIAGNOSIS_COUNTER"));
+		std::cout << "POP G UL: " << _STOP_AFTER_DIAGNOSIS_COUNTER << std::endl;
+	}
+}
+
+void Clonal_Expansion::Configure_Sampling_Distribution_Structures_V2(const std::map<std::string, std::string> &logic)
+{
+	
+	std::vector<std::string> pr_vals = split(logic.at("Dist_Params"), ','); 
+	if(pr_vals.size() > 0)
+	{
+		for(unsigned int i = 0; i < pr_vals.size(); i++)
+		{
+			PR_Sampling_Parameters.push_back(std::stod (pr_vals.at(i)));
+			std::cout << " val [" << i << "] " << trimmed(pr_vals.at(i)) << " vals " << PR_Sampling_Parameters.at(i) <<std::endl;
+		}
+	}// end of if
+
+	setPR_Sampling_type(logic.at("PR_Dist"));
+	setMR_Sampling_type(logic.at("MR_Dist"));
+
+	std::vector<std::string> mr_vals = split(logic.at("MR_Dist_Params"), ',');
+	if(mr_vals.size() > 0)
+	{
+		for(unsigned int i = 0; i < mr_vals.size(); i++)
+		{	
+			MR_Sampling_Parameters.push_back(std::stod (mr_vals.at(i)  ));
+			std::cout << " val [" << i << "] " << trimmed(mr_vals.at(i)) << " vals " << MR_Sampling_Parameters.at(i) <<std::endl;
+		}
+	}
+
+	setMutational_Effect_Dist(logic.at("Mutational_Effect"));
+	//std::cout << "Mut effect dist " << Mutational_Effects << std::endl;
+	
+	std::vector<std::string> meff_vals = split(logic.at("Mutational_Effect_Params"), ',');
+	if(meff_vals.size() > 0)
+	{
+		for(unsigned int i = 0; i < meff_vals.size(); i++)
+		{	
+			MEFF_Sampling_Parameters.push_back(std::stod (meff_vals.at(i)  ));
+			std::cout << " val [" << i << "] " << trimmed(meff_vals.at(i)) << " vals " << MEFF_Sampling_Parameters.at(i) <<std::endl;
+		}
+	}
+
+	std::vector<std::string> pass_vals = split(logic.at("Passenger_Distribution_Parameters"), ',');
+	if(pass_vals.size() > 0)
+	{
+		for(unsigned int i = 0; i < pass_vals.size(); i++)
+		{	
+			Passenger_Distribution_Parameters.push_back(std::stod (pass_vals.at(i)  ));
+			std::cout << " val [" << i << "] " << trimmed(pass_vals.at(i)) << " vals " << Passenger_Distribution_Parameters.at(i) <<std::endl;
+		}
+	}
+
+	/////// Deleterious 
+	std::vector<std::string> dele_vals = split(logic.at("Deleterious_Distribution_Parameters"), ',');
+	if(dele_vals.size() > 0)
+	{
+		for(unsigned int i = 0; i < dele_vals.size(); i++)
+		{	
+			Deleterious_Distribution_Parameters.push_back(std::stod (dele_vals.at(i)  ));
+			std::cout << " val [" << i << "] " << trimmed(dele_vals.at(i)) << " vals " << Deleterious_Distribution_Parameters.at(i) <<std::endl;
+		}
+	}
+
+	/////// Beneficial 
+	std::vector<std::string> bene_vals = split(logic.at("Beneficial_Distribution_Parameters"), ',');
+	if(bene_vals.size() > 0)
+	{
+		for(unsigned int i = 0; i < bene_vals.size(); i++)
+		{	
+			Beneficial_Distribution_Parameters.push_back(std::stod (bene_vals.at(i)  ));
+			std::cout << " val [" << i << "] " << trimmed(bene_vals.at(i)) << " vals " << Beneficial_Distribution_Parameters.at(i) <<std::endl;
+		}
+	}
+
+	setPassenger_Distribution( logic.at("Passenger_Distribution") );
+	std::cout << "Pass Dist " << Passenger_Distribution << std::endl;
+
+	setDeleterious_Distribution( logic.at("Deleterious_Distribution")  );
+	std::cout << "Del Dist " << Deleterious_Distribution << std::endl;
+
+	setBeneficial_Distribution( logic.at("Beneficial_Distribution") );
+	std::cout << "Ben Dist " << Beneficial_Distribution << std::endl;
+
+}
+
+void Clonal_Expansion::Configure_Sampling_Distribution_Structures_V1(const std::map<std::string, std::string> &logic)
+{
+	std::vector<std::string> pr_vals = split(logic.at("Dist_Params"), ','); 
+	if(pr_vals.size() > 0)
+	{
+		for(unsigned int i = 0; i < pr_vals.size(); i++)
+		{
+			PR_Sampling_Parameters.push_back(std::stod (pr_vals.at(i)));
+			std::cout << " val [" << i << "] " << trimmed(pr_vals.at(i)) << " vals " << PR_Sampling_Parameters.at(i) <<std::endl;
+		}
+	}// end of if
+
+	setPR_Sampling_type(logic.at("PR_Dist"));
+	setMR_Sampling_type(logic.at("MR_Dist"));
+
+	std::vector<std::string> mr_vals = split(logic.at("MR_Dist_Params"), ',');
+	if(mr_vals.size() > 0)
+	{
+		for(unsigned int i = 0; i < mr_vals.size(); i++)
+		{	
+			MR_Sampling_Parameters.push_back(std::stod (mr_vals.at(i)  ));
+			std::cout << " val [" << i << "] " << trimmed(mr_vals.at(i)) << " vals " << MR_Sampling_Parameters.at(i) <<std::endl;
+		}
+	}
+}
+
+void Clonal_Expansion::Set_Data_Storage_Folders(const std::string & data_path, std::string & growth_path, std::string & evolution_path, int & myID, unsigned int & replicates)
+{
+	std::string iteration ="";
+	if(myID == 0)
+	{
+		iteration = data_path + "IT_" + std::to_string(replicates) +"/";
+		std::cout << "Iteration path:" << iteration << std::endl;//<< "/" << "ID_" << std::to_string(myID)<< std::endl;
+		mkdir(iteration.c_str(), ACCESSPERMS);
+		Path_Bcast_From_Master( iteration );
+	}
+	else
+	{
+		Path_Bcast_From_Salves( iteration, myID);
+	}
+	
+
+	std::string Core_ID_path = iteration + "ID_" + std::to_string(myID) +"/";
+	std::cout << "Core_ID_path " << Core_ID_path << std::endl;//<< "/" << "ID_" << std::to_string(myID)<< std::endl;
+	mkdir(Core_ID_path.c_str(), ACCESSPERMS);
+	growth_path = Core_ID_path + "Growth/";
+	std::cout << "Growth " << growth_path << std::endl;//<< "/" << "ID_" << std::to_string(myID)<< std::endl;
+	mkdir(growth_path.c_str(), ACCESSPERMS);
+	growth_path = growth_path + "Tumour_Growth.txt";
+	 evolution_path = Core_ID_path + "Evolution/";
+	std::cout << "Evolution " << evolution_path << std::endl;
+	mkdir(evolution_path.c_str(), ACCESSPERMS);
+}
+
+
+void Clonal_Expansion::Path_Bcast_From_Master(const std::string & data_path)
+{
+	char path[1024];
+	strncpy(path, data_path.c_str(), sizeof(path));
+	path[sizeof(path) - 1] = 0;
+
+	int pathLength = sizeof(path);
+	MPI_Bcast (&pathLength, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast (path, pathLength, MPI_CHAR, 0, MPI_COMM_WORLD);
+}
+
+void Clonal_Expansion::Path_Bcast_From_Salves(std::string & data_path, int & myID)
+{
+	unsigned pathLength;
+	char * Path;
+	MPI_Bcast (&pathLength, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   	Path = (char *) malloc (pathLength);
+   	MPI_Bcast (Path, pathLength, MPI_CHAR, 0, MPI_COMM_WORLD);
+    printf ("Process %d: %s\n", myID, Path);
+    data_path = std::string(Path);
+    std::cout << "Data recieved " << myID << " is " << data_path << std::endl;
+}
+
+//this will become the main
+void Clonal_Expansion::Compute_Tumour_Growth_V1(const std::map<std::string, std::string> &logic, unsigned int & replicates, int & myID, std::string & data_path)
+{
+	
+	bool print_time_step = false;
+	bool write_tumour_evolution = false;
 	bool each_100 = true;
-	getchar();
 
+	Logic_File_Kernel_Configurations_V1(logic, print_time_step, write_tumour_evolution, each_100);
 
-	Random r;
+	unsigned long long int _MAXIMUM_POPULATION_SIZE_GROWTH = 0;
+	unsigned long long int _DETECTABLE_POPULATION_SIZE = 0;
+	unsigned int _STOP_AFTER_DIAGNOSIS_COUNTER = 0;
+
+	Setting_Population_Parameters(logic,  _MAXIMUM_POPULATION_SIZE_GROWTH, _DETECTABLE_POPULATION_SIZE, _STOP_AFTER_DIAGNOSIS_COUNTER );
+
+	Init_Random();
+	Configure_Sampling_Distribution_Structures_V1( logic );
+
+	//std::string data_path = "";
+	if( data_path == "")
+	{
+		if(myID == 0)
+		{
+			setTumour_Evolution_Folder( data_path, logic );
+			Path_Bcast_From_Master( data_path );
+		}
+		else
+		{
+			Path_Bcast_From_Salves( data_path, myID);
+		}
+
+		std::cout << "ID: " << myID << " path: " << data_path << std::endl;
+		
+	}
+	
+
 	unsigned int seconds = 0;
 	unsigned int hours = 0;
 	unsigned int years = 0;
+	unsigned long long int elapsed_hours = 0;
+
 
 	/* File stream */
 	carcinogenesis_V1();
-	printValues (Tumour -> at(0));
-	while( Population_Size < 4000000000 && !( Population_Size == 0) )
+	set_PR_DR_Difference();
+	set_Penalty_Max_Pop_Size( _MAXIMUM_POPULATION_SIZE_GROWTH );
+	if(myID==0) {printValues (Tumour -> at(0));}
+
+	// uncomment form here
+
+	 std::string growth_path = "";
+	 std::string evolution_path = "";
+
+
+	 Set_Data_Storage_Folders( data_path,  growth_path, evolution_path, myID, replicates);
+
+	
+	// getchar();
+
+	std::ofstream te_file;
+	te_file.open (growth_path);
+	unsigned int stop_growth_counter = 0;
+
+	// std::cout << "Max pop " << _MAXIMUM_POPULATION_SIZE_GROWTH << std::endl;
+	// std::cout << "DETECT " << _DETECTABLE_POPULATION_SIZE << std::endl;
+	// std::cout << "STOP aft diag " << _STOP_AFTER_DIAGNOSIS_COUNTER << std::endl;
+
+	//getchar();
+
+	while( ( stop_growth_counter < _STOP_AFTER_DIAGNOSIS_COUNTER) && !( Population_Size == 0) )
 	{
 		seconds += dt;
 		if(seconds == 3600)
 		{
 			seconds = 0; hours ++;
-			Update_Population_V1(hours, years, r);
+			Update_Population_V1(hours, years);
 			Select_Size_Dependant_Penalty();
 			
-			if(print_time_step)
-				print_Status( hours, years, each_100 );
+			if( print_time_step )
+				print_Status( hours, years, each_100, myID );
 		}
-		if(hours == 8764)//8764
-		{
-			hours = 0; years ++;
-		}
+		
+		Update_Hours( hours, years );
+
+		if(write_tumour_evolution )
+			Write_Tumour_Evolution( elapsed_hours, evolution_path );
+
+		Write_To_File( te_file, elapsed_hours );
+		Stop_Gowth_Condition_Counter( stop_growth_counter, _STOP_AFTER_DIAGNOSIS_COUNTER, _DETECTABLE_POPULATION_SIZE );
 	}
 
+	te_file.close();
+	//Print_Clones();
+
+	Write_Final_Population_Sattus_V1( evolution_path );
+
+	//print clone values
+	// for (unsigned int ith_clone = 0; ith_clone < Tumour -> size() ; ith_clone++) 			//(1) Is my clone not extinct?	tmr -> Tumour -> size()
+	// {	
+	// 	std::cout << "C_S[ " << ith_clone << " ] = " << Tumour -> at( ith_clone ) -> Clone_Size <<  "\t\t PR: " <<  Tumour -> at (ith_clone) -> P_Expansion[1] << " MR: " << Tumour -> at (ith_clone) -> Mutation_Rate  <<std::endl;
+	// }
 
 }
 
-void Clonal_Expansion::Compute_Tumour_Growth(const std::map<std::string, std::string> &logic)
+
+
+void Clonal_Expansion::Print_Clones(void)
+{
+	for (unsigned int ith_clone = 0; ith_clone < Tumour -> size() ; ith_clone++) 			//(1) Is my clone not extinct?	tmr -> Tumour -> size()
+	{	
+		if(Tumour -> at(ith_clone) -> Clone_Size > 100 )
+			std::cout << "C_S[ " << Tumour -> at( ith_clone ) -> Generation_ID << " ] = " << Tumour -> at( ith_clone ) -> Clone_Size <<  "\t\t PR: " <<  Tumour -> at (ith_clone) -> P_Expansion[1] << " MR: " << Tumour -> at (ith_clone) -> Mutation_Rate  <<std::endl;
+	}
+}
+
+void Clonal_Expansion::Print_Clone_V2(void)
+{
+	for (unsigned int ith_clone = 0; ith_clone < Tumour -> size() ; ith_clone++) 			//(1) Is my clone not extinct?	tmr -> Tumour -> size()
+	{	
+		if(Tumour -> at(ith_clone) -> Clone_Size > 100 )
+			std::cout << "C_S[ " << Tumour -> at( ith_clone ) -> Generation_ID << " ] = " 
+					  << Tumour -> at( ith_clone ) -> Clone_Size <<  "\tPR: " 
+					  <<  Tumour -> at (ith_clone) -> P_Expansion[1] 
+					  << " MR: " << Tumour -> at (ith_clone) -> Mutation_Rate  
+					  << " \tMuts " << Tumour -> at (ith_clone) -> Clonal_Mutations
+					  << " \t burden " <<   Tumour -> at (ith_clone) -> Clonal_Mutational_Burden
+					  << " \t Max PR " << Tumour -> at (ith_clone) -> max_PR
+					  << std::endl;
+	}
+}
+
+
+void Clonal_Expansion::Compute_Tumour_Growth_V2(const std::map<std::string, std::string> &logic, unsigned int & replicates, int & myID, std::string & data_path)
+{
+	std::cout << "In VERSION 2 " << std::endl;
+	bool print_time_step = false;
+	bool write_tumour_evolution = false;
+	bool each_100 = false;
+	
+	Logic_File_Kernel_Configurations_V2(logic, print_time_step, write_tumour_evolution, each_100);
+
+	unsigned long long int _MAXIMUM_POPULATION_SIZE_GROWTH = 0;
+	unsigned long long int _DETECTABLE_POPULATION_SIZE = 0;
+	unsigned int _STOP_AFTER_DIAGNOSIS_COUNTER = 0;
+
+	Setting_Population_Parameters(logic, _MAXIMUM_POPULATION_SIZE_GROWTH, _DETECTABLE_POPULATION_SIZE, _STOP_AFTER_DIAGNOSIS_COUNTER );
+
+	Init_Random();
+	Configure_Sampling_Distribution_Structures_V2(logic);
+
+	//std::string data_path = "";
+	if(data_path == "")
+	{
+		if(myID == 0)
+		{
+			setTumour_Evolution_Folder( data_path, logic );
+			Path_Bcast_From_Master( data_path );
+		}
+		else
+		{
+			Path_Bcast_From_Salves( data_path, myID);
+		}
+		std::cout << "ID: " << myID << " path: " << data_path << std::endl;
+	}
+	
+
+	unsigned int seconds = 0;
+	unsigned int hours = 0;
+	unsigned int years = 0;
+	unsigned long long int elapsed_hours = 0;
+
+
+	/* File stream */
+	carcinogenesis_V2();// chaneg this 
+	set_PR_DR_Difference();
+	set_Penalty_Max_Pop_Size( _MAXIMUM_POPULATION_SIZE_GROWTH );
+	printValues (Tumour -> at(0));
+
+	 std::string growth_path = "";
+	 std::string evolution_path = "";
+
+
+	 Set_Data_Storage_Folders( data_path,  growth_path, evolution_path, myID, replicates);
+
+	
+
+	
+	//te_file.open ("./Mitosis_Model/te_file_33_V2.txt");
+	std::ofstream te_file;
+	te_file.open (growth_path);
+	unsigned int stop_growth_counter = 0;
+
+	
+
+	//getchar();
+
+	while( ( stop_growth_counter < _STOP_AFTER_DIAGNOSIS_COUNTER) && !( Population_Size == 0) )
+	{
+		seconds += dt;
+		if(seconds == 3600)
+		{
+			seconds = 0; hours ++;
+			Update_Population_V2( hours, years );
+			Select_Size_Dependant_Penalty();
+
+			 if(print_time_step)
+			 	print_Status( hours, years, each_100, myID );
+		}
+		Update_Hours( hours, years );
+
+		if(write_tumour_evolution)
+			Write_Tumour_Evolution( elapsed_hours, evolution_path );
+
+		Write_To_File( te_file, elapsed_hours );
+		Stop_Gowth_Condition_Counter( stop_growth_counter, _STOP_AFTER_DIAGNOSIS_COUNTER, _DETECTABLE_POPULATION_SIZE );
+
+	}// while
+
+	te_file.close();
+	//Print_Clone_V2();
+
+	Write_Final_Population_Sattus_V2( evolution_path );
+
+	if(Population_Size == 0)
+	{
+		std::string failed_to_grow = data_path + "/IT_"+ std::to_string(replicates) + "/ID_" + std::to_string(myID) + "/";
+		std::string remove_folder = std::string("rm -rf ") + "\"" + failed_to_grow + "\"";
+		std::cout << "Removing Folder " << failed_to_grow << std::endl;
+		//system( remove_folder.c_str() );
+	}
+	else
+	{
+		std::cout << "Simulation in process " << myID << " successfully grew" << std::endl;
+	}
+
+	
+
+}
+
+
+void Clonal_Expansion::Compute_Tumour_Growth(const std::map<std::string, std::string> &logic, unsigned int & replicates, int & myID, std::string & data_path)
 {
 	switch(Version)
  	{
@@ -1536,10 +2908,12 @@ void Clonal_Expansion::Compute_Tumour_Growth(const std::map<std::string, std::st
             break;
         case 1:
             std::cout << "1 Version: " << Version << std::endl;
-            Compute_Tumour_Growth_V1(logic);
+            Compute_Tumour_Growth_V1(logic, replicates, myID,  data_path);
             break;
         case 2:
             std::cout << "2 Version: " << Version << std::endl;
+            Compute_Tumour_Growth_V2(logic, replicates, myID, data_path);
+            MPI_Barrier(MPI_COMM_WORLD);
             break;
         case 3:
             std::cout << "3 Version: " << Version << std::endl;
@@ -1556,10 +2930,5 @@ void Clonal_Expansion::Compute_Tumour_Growth(const std::map<std::string, std::st
  	}//switch	
 }
 
-
-//void Clonal_Expansion::Grow_Tumour()
-//{
-
-//}
 
 

@@ -359,7 +359,7 @@ void carcinogensis_from_Driver(std::unique_ptr<Clonal_Expansion>  & tmr,
 	 double mr = tmr -> Tumour -> at(*clone_indx) -> Mutation_Rate;
 	 unsigned int AC = tmr -> Tumour -> at(*clone_indx) -> Driver_10_fold_accumulation;
 	// unsigned int Accumulated_Drivers = tmr -> Tumour -> at(*clone_indx) -> Driver_10_fold_accumulation;
-	 unsigned long long int NOM = tmr -> Tumour -> at (*clone_indx) -> Number_of_Mutations;
+	// unsigned long long int NOM = tmr -> Tumour -> at (*clone_indx) -> Number_of_Mutations;
 	 double pr = tmr -> Tumour -> at(*clone_indx) -> P_Expansion[1];
 
 	
@@ -380,7 +380,7 @@ void carcinogensis_from_Driver(std::unique_ptr<Clonal_Expansion>  & tmr,
 	tmr -> Tumour -> back() -> Generation_ID = cloneName;
 	tmr -> Tumour -> back() -> Initiall_Expasion_Period = false;
 	tmr -> Tumour -> back() -> Clone_Size = 1;
-	tmr -> Tumour -> back() -> Number_of_Mutations = NOM + 1;
+	//tmr -> Tumour -> back() -> Number_of_Mutations = NOM + 1;
 
 	tmr -> Tumour -> back() -> Remaining_Time_in_G1_Phase = r.G1();
 	tmr -> Tumour -> back() -> Remaining_Time_in_S_Phase = r.S();
@@ -531,7 +531,7 @@ unsigned long long int Mutational_Effects_Normal_Kernell(std::unique_ptr<Clonal_
 			}
 			if(buffer[2] > 0)
 			{
-				tmr -> Tumour-> at(Generation_ID) -> Number_of_Mutations++;
+				//tmr -> Tumour-> at(Generation_ID) -> Number_of_Mutations++;
 				double beta_penalty = gsl_ran_beta( r_global, 0.1, 200.0);
 				double PR_t = tmr -> Tumour -> at(Generation_ID) -> P_Expansion[1];
 				if(beta_penalty >= PR_t)
@@ -542,7 +542,7 @@ unsigned long long int Mutational_Effects_Normal_Kernell(std::unique_ptr<Clonal_
 
 			if(buffer[3] > 0)
 			{
-				tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
+				//tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
 				double beta_penalty = gsl_ran_beta(r_global, 0.1, 25.0);
 				double PR_t = tmr -> Tumour -> at(Generation_ID) -> P_Expansion[1];
 				if(beta_penalty >= PR_t)
@@ -553,7 +553,7 @@ unsigned long long int Mutational_Effects_Normal_Kernell(std::unique_ptr<Clonal_
 
 			if(buffer[4]> 0)
 			{
-				tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
+			//	tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
 				double beta_gain = gsl_ran_beta (r_global, 0.1, 40.0);
 
 				tmr -> Tumour -> at(Generation_ID) -> P_Expansion[1] += beta_gain;
@@ -591,9 +591,9 @@ unsigned long long int Basic_Tester(std::unique_ptr<Clonal_Expansion>  & tmr, in
 			}
 			if(buffer[2] > 0 )
 			{
-				tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
-				if(tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations % 700 == 0)
-					tmr -> Tumour -> at(Generation_ID) -> P_Expansion[1] -= 0.002;
+				//tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
+				//if(tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations % 700 == 0)
+				//	tmr -> Tumour -> at(Generation_ID) -> P_Expansion[1] -= 0.002;
 			}
 			if(buffer[3]>0)
 			{
@@ -639,7 +639,7 @@ unsigned long long int Size_Mapped(std::unique_ptr<Clonal_Expansion>  & tmr, int
 			}
 			if(buffer[2] > 0 )
 			{
-				tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
+				//tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
 				double beta_penalty = gsl_ran_beta(r_global, 0.1, 500.0);
 				double PR_t = tmr -> Tumour -> at(Generation_ID) -> P_Expansion[1];
 				if(beta_penalty >= PR_t)
@@ -661,7 +661,7 @@ unsigned long long int Size_Mapped(std::unique_ptr<Clonal_Expansion>  & tmr, int
  				else
  					tmr -> Tumour -> at(Generation_ID) -> P_Expansion[1] -= Total_Penalty;
 
- 				tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
+ 				//tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
 
 			}
 
@@ -672,7 +672,7 @@ unsigned long long int Size_Mapped(std::unique_ptr<Clonal_Expansion>  & tmr, int
 				double Stochastic_Gain = gsl_ran_beta(r_global, 1, 40 + N); //40
 				double Total_Gain = Inv_N + Stochastic_Gain;
  				tmr -> Tumour -> at(Generation_ID) -> P_Expansion[1] += Total_Gain;
- 				tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
+ 				//tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
 			}
 		}//inner for
 	}
@@ -702,7 +702,7 @@ unsigned long long int Laplace_Effect(std::unique_ptr<Clonal_Expansion>  & tmr, 
  			}
  			if(buffer[2]>0)
  			{
- 				tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
+ 				//tmr -> Tumour -> at(Generation_ID) -> Number_of_Mutations++;
  				double penalty = (gsl_ran_beta(r_global, 2.0, 9.0)/1000.0)-0.0004 ; 
  				double PR_t = tmr -> Tumour -> at(Generation_ID) -> P_Expansion[1];
 

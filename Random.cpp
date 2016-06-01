@@ -59,6 +59,14 @@ unsigned int Random::Poisson()
 	return std::poisson_distribution<unsigned int>{1}(eng);
 }
 
+void Random::Multiple_Mutations_Poisson(unsigned int & number_of_mutations)
+{
+	number_of_mutations = std::poisson_distribution<unsigned int>{1}(eng);
+	if(number_of_mutations == 0)
+		number_of_mutations = 1;
+
+}
+
 double Random::Z()
 {
 	return std::normal_distribution<double>{0.0,1.0}(eng);
@@ -99,6 +107,31 @@ double Random::Uniform_Mutation_Rate(double mu_rate)
 // 	return U;
 // }
 
+// 
+// New Models
+//
+void Random::Uniform_PR_Update(const double & Parent_Proliferation_Rate, const double & Variance, double & updated_PR)
+{
+	double U_sample = std::normal_distribution<double>{Parent_Proliferation_Rate, Variance }(eng);
+	if(U_sample > 1.0)
+	{
+		U_sample = 1.0;
+	}
+	if (U_sample < 0.0)
+	{
+		U_sample = 0.0;
+	}
+	updated_PR = U_sample;
+}
+
+void Random::Uniform_Gain_Update(const double & Parent_mu_rate, const double gain, double & updated_MR)
+{
+	double U = 0.0;
+	U = fabs(std::normal_distribution<double>{Parent_mu_rate * gain, Parent_mu_rate/gain  }(eng)) ;
+	updated_MR = U;
+
+}
+
 double Random::Update_Proliferation_Rate(double Parent_Proliferation_Rate)
 {
 	/*
@@ -132,6 +165,22 @@ double Random::Update_Proliferation_Rate(double Parent_Proliferation_Rate)
 
 	
 }
+
+void Random::Update_Proliferation_Rate_V2(const double & Parent_Proliferation_Rate, double & new_PR )
+{
+	
+
+	new_PR = Parent_Proliferation_Rate + std::normal_distribution<double>{0.01, 0.05 }(eng);
+	if(new_PR >= 0.2)
+		new_PR = 0.2;	
+
+	if(new_PR < 0.0)
+		new_PR = 0.0;
+
+
+
+
+}
 //TODO this is weird
 double Random::Uniform_Mutation_Rate_2(double Parent_mu_rate)
 {
@@ -146,6 +195,50 @@ double Random::Uniform_Mutation_Rate_2(double Parent_mu_rate)
 	return U;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/////////////// HIGH PERFOMANCE DECLARATION OF FUNCTIONS //////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+void Random::Basic_Clonal_Expansion_Sampling_V1_HPC(const unsigned long long int & Clone_Size, const double & p_dr, const double & p_pr, std::vector<unsigned long long int> & NewBorn_Cells)
+{
+	double                     p_vector[] = { p_dr, p_pr, 1.0 - (p_dr + p_pr) };
+	unsigned long long int cumulative_N   = 0;
+	double                 cumulative_p   = 0.0;
+    
+	for(unsigned long long int i = 0; i < 2; i++)
+	{
+		if(p_vector[i] == 0.0)
+		{
+			NewBorn_Cells.push_back(0);
+		}
+		else
+		{
+			std::binomial_distribution<unsigned long long int> distribution( (Clone_Size - cumulative_N), p_vector[i] / (1.0 -cumulative_p) );
+			NewBorn_Cells.push_back( distribution(eng) );
+		}
+		cumulative_N += NewBorn_Cells.at(i);
+		cumulative_p += p_vector[i];
+	
+	}
+	NewBorn_Cells.push_back( Clone_Size - cumulative_N );
+}
+
+
+void Random::Binomial_Mutant( std::tuple<unsigned long long int, 
+										 unsigned long long int, 
+										 unsigned long long int, 
+										 bool, bool> & Dying_and_Newborn,
+										 const double & mutation_rate)
+{
+
+    std::binomial_distribution<unsigned long long int> distribution( std::get<1>(Dying_and_Newborn), mutation_rate );
+    std::get<2>(Dying_and_Newborn) = distribution(eng);
+
+}
+
 
 // For V1 smapling model//fix
 void Random::Basic_Clonal_Expansion_Sampling_V1( const unsigned long long int & Clone_Size, const  double & p_dr, const  double & p_pr, const double & p_idle, std::vector<unsigned int> & NewBorn_Cells)
@@ -157,7 +250,7 @@ void Random::Basic_Clonal_Expansion_Sampling_V1( const unsigned long long int & 
 	NewBorn_Cells.push_back(0);
 
 	static unsigned int buffer[3] = {0, 0, 0} ;// This will contain B_{G0,i}(t) and B_{G1,i}(t)
-	double p_vector[] = {p_dr, p_pr, p_idle};
+	double p_vector[] = {p_dr, p_pr, 1.0 - (p_dr + p_pr)};
 	const size_t K_S = 3;
 
 
@@ -171,11 +264,7 @@ void Random::Basic_Clonal_Expansion_Sampling_V1( const unsigned long long int & 
 	NewBorn_Cells[0] = buffer[0];
 	NewBorn_Cells[1] = buffer[1];
 	NewBorn_Cells[2] = buffer[2];
-
-	//std::cout << "DR: " << buffer[0] << " Pr: " << buffer[1] << " ID: " << buffer[2] << std::endl;
-
 	
-
 }
 
 

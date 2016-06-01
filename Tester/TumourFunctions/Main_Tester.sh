@@ -16,7 +16,7 @@ g++ -Wall -shared -I/usr/local/inlcude -c "$core_path/ClonalExpansion.cpp" --std
 g++ -Wall -shared -I/usr/local/inlcude -c "$core_path/Random.cpp" --std=c++11 
 
 
-g++ -lgsl  Main_Tester.o config.o Clone.o clonalFun.o inout_funs.o ClonalExpansion.o Random.o -o Main_Tester 
+g++ -lgsl -lgsl -lgslcblas -lm -lmpi_cxx -lmpi Main_Tester.o config.o Clone.o clonalFun.o inout_funs.o ClonalExpansion.o Random.o -o Main_Tester 
 
  rm config.o
  rm Clone.o
