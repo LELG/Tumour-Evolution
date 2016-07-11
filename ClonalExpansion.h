@@ -113,7 +113,13 @@ public:
 	double Penalty_Max_Population_Size;
 	double PR_DR_Difference;
 	bool Multiple_Mutations;
-	
+	unsigned long long int Newborn_Clones_at_t;
+	unsigned long long int Population_at_prev_t;
+	unsigned int Clonality_at_prev_t;
+	unsigned long long int Minimum_Clone_Size_Wrtite_TE;
+	double Delta_Population_Write_TEM;
+	double Delta_Clone_Write_TEM;
+
 	//std::vector<std::string> distribution_values;
 		/**
 			This is the main Data Structure to store all clones, this will
@@ -198,6 +204,7 @@ public:
 	void Clonal_Extinction_From_Size(const unsigned int & ith_clone);
 	void Dealyed_Mitosis_V1(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years);
 	void Dealyed_Mitosis_V2(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years);
+	void Dealyed_Mitosis_V2R(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years);
 	void Estimate_Mutational_Effects(unsigned int & Mutant_Cells, unsigned long long int & Clone_Size);
 	void Update_Clonal_Mutational_Burden(const unsigned int & ith_clone, const unsigned int & Mutant_cells, const unsigned int & years, const unsigned int & hours, std::vector<unsigned int> & Mutations );
 	void carcinogenesis_from_driver(const unsigned int & ith_clone, const unsigned int & years, const unsigned int & hours);
@@ -224,8 +231,11 @@ public:
 	void map_Feedback(  );
 	void Adjust_Feedback_PR(double & P_NB);
 	void Check_Clonal_Extinction_BCE_V1(const unsigned int & ith_clone, std::tuple<unsigned long long int, unsigned long long int, unsigned long long int, bool, bool> & Dying_and_Newborn);
+	void Check_Clonal_Extinction_BCE_V2(const unsigned int & ith_clone, std::tuple<unsigned long long int, unsigned long long int, unsigned long long int, bool, bool> & Dying_and_Newborn);
 	void Print_Debug_Carcinogeneisis_From_Driver(const unsigned int & ith_clone);
 	void Carcinogenesis_From_Driver_V2(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years);
+	void Carcinogenesis_From_Drug_Resistance_Growth(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years);
+	
 	void Carcinogenesis_From_Driver_V1(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years);
 	void Checking_for_Mutants(std::tuple<unsigned long long int, 
 													   unsigned long long int, 
@@ -253,6 +263,11 @@ public:
 																									  unsigned long long int, 
 																									  bool, bool> & Dying_and_Newborn, const unsigned int & hours, const unsigned int & years);
 
+	void Apply_Penalties_to_Mutants_V2R(const unsigned int & ith_clone,  std::tuple<unsigned long long int, 
+																									  unsigned long long int, 
+																									  unsigned long long int, 
+																									  bool, bool> & Dying_and_Newborn, const unsigned int & hours, const unsigned int & years);
+
 	void Update_Mutant_Mutational_Effects_V1(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years, const std::tuple<unsigned long long int, 
 																																					unsigned long long int, 
 																																					unsigned long long int, 
@@ -263,19 +278,55 @@ public:
 																																								 unsigned long long int, 
 																																								 bool, bool> & Dying_and_Newborn);
 
+	void Update_Mutant_Mutational_Effects_V2R(const unsigned int & ith_clone, const unsigned int & hours, const unsigned int & years,  std::tuple<unsigned long long int, 
+																																								 unsigned long long int, 
+																																								 unsigned long long int, 
+																																								 bool, bool> & Dying_and_Newborn);
+
 	void Update_Newborn_Parameters_V1(const std::vector<unsigned long long int> & NewBorn_Cells, std::tuple<unsigned long long int, 
 																											unsigned long long int, 
 																											unsigned long long int, 
 																											bool, bool> & Dying_and_Newborn);
 
+	void Update_Newborn_Parameters_V2( const std::vector<unsigned long long int> & NewBorn_Cells, std::tuple<unsigned long long int, 
+																															unsigned long long int,
+																															unsigned long long int,
+																															bool, bool> & Dying_and_Newborn);
+
+
+	void Create_Drug_Resiatance_Clones(const std::vector<unsigned long long int> & NewBorn_Cells, 
+									   const unsigned int & ith_clone,
+									   const unsigned int & hours,
+									   const unsigned int & years,
+									   std::tuple<unsigned long long int, 
+												 unsigned long long int,
+												 unsigned long long int,
+												bool, bool> & Dying_and_Newborn);
+
+	void Update_Newborn_Parameters_V2R( const std::vector<unsigned long long int> & NewBorn_Cells, std::tuple<unsigned long long int, 
+																															unsigned long long int,
+																															unsigned long long int,
+																															bool, bool> & Dying_and_Newborn);
+
 	void Basic_Clonal_Expansion_V1(const unsigned int & ith_clone, std::tuple<unsigned long long int, 
 																			  unsigned long long int, 
 																			  unsigned long long int, bool, bool> & Dying_and_Newborn);
 
-	void Write_Tumour_Evolution(const unsigned long long int & elapsed_hours, const std::string & data_path);
+	void Basic_Clonal_Expansion_V2(const unsigned int & ith_clone, std::tuple<unsigned long long int, 
+																							unsigned long long int, 
+																							unsigned long long int, bool, bool> & Dying_and_Newborn);
 
-	void Write_Final_Population_Sattus_V1( const std::string & data_path);
-	void Write_Final_Population_Sattus_V2( const std::string & data_path);
+	void Basic_Clonal_Expansion_V2R(const unsigned int & ith_clone, std::tuple<unsigned long long int, 
+																							unsigned long long int, 
+																							unsigned long long int, bool, bool> & Dying_and_Newborn, 
+																							 const unsigned int & hours, const unsigned int & years);
+
+	void Write_Tumour_Evolution_Single(const unsigned long long int & elapsed_hours, const std::string & data_path);
+	void Write_Tumour_Evolution_Split(const unsigned long long int & elapsed_hours, const std::string & data_path);
+	void Write_Tumour_Evolution(const unsigned long long int & elapsed_hours, const std::string & data_path, const bool single);
+
+	void Write_Final_Population_Status_V1( const std::string & data_path);
+	void Write_Final_Population_Status_V2( const std::string & data_path);
 
 	void Stop_Gowth_Condition_Counter(unsigned int & stop_growth_counter, const unsigned int & _STOP_AFTER_DIAGNOSIS_COUNTER, const unsigned long long int & _DETECTABLE_POPULATION_SIZE );
 
@@ -284,6 +335,7 @@ public:
 	void Print_Clone_V2(void);
 	void Print_Clones(void);
 	void Update_Population_V2(const unsigned int & hours, const unsigned int & years);
+	void Update_Population_V2R(const unsigned int & hours, const unsigned int & years);
 	void Update_Population_V1(const unsigned int & hours, const unsigned int & years);
 	void Compute_Tumour_Growth(const std::map<std::string, std::string> &logic, unsigned int & replicates, int & myID, std::string & data_path);
 
@@ -291,6 +343,8 @@ public:
 	void Get_Competitive_Clonal_Size(unsigned int & Effective_Tumour_Size );
 	void Write_To_File(	 std::ofstream & te_file, unsigned long long int & elapsed_hours);
 	void print_Status( const unsigned int & hours, const unsigned int & years,  const bool & each_100, int & myID);
+	void print_Final_Status(const unsigned int & hours, const unsigned int & years,  int & myID);
+	void print_Final_Status_DR(const unsigned int & hours, const unsigned int & years, int & myID);
 
 	void set_PR_DR_Difference(void);
 	void set_Penalty_Max_Pop_Size(const unsigned long long int _MAXIMUM_POPULATION_SIZE_GROWTH);
@@ -305,6 +359,12 @@ public:
 	void Configure_Sampling_Distribution_Structures_V2(const std::map<std::string, std::string> &logic);
 	void Configure_Sampling_Distribution_Structures_V1(const std::map<std::string, std::string> &logic);
 	void Compute_Tumour_Growth_V2(const std::map<std::string, std::string> &logic, unsigned int & replicates, int & myID, std::string & data_path);
+	void Compute_Tumour_Growth_V2_DR(const std::map<std::string, std::string> &logic, unsigned int & replicates, int & myID, std::string & data_path);
+
+	void Valid_Configurtation(bool & valid);
+	void Population_Difference(bool & delta );
+	void Append_Tumour_Evolution_File(const unsigned long long int & elapsed_hours, const std::string & data_path);
+	void Clonal_Difference(bool & delta_clone );
 
 	void Create_Folder_TE(const std::string & data_path);
 	void Check_Data_Path_Folder_Creation(const std::string & data_path);

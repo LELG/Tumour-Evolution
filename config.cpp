@@ -31,6 +31,9 @@ const bool REMOVE_DEATH_CLONES = false;
 
 const unsigned long long MAX_CLONE_SIZE = (unsigned long long) std::numeric_limits<unsigned int>::max();
 
+
+const double P_DRUG_RESISTANCE = 0.0000001;
+
 // We can overide thios in a config file, this are default
 const std::map<std::string, bool> CLONE_VARIABLES = {	{"Mutation_Rate", true}, \
 														{"Proliferation_Rate", true}, \
@@ -76,7 +79,6 @@ const bool MULTIPLE_MUTATIONS = true;
 const int MUTATION_MODEL = 1;
 
 gsl_rng *r_global ;		
-
 
 
 

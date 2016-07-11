@@ -26,7 +26,7 @@ int main(int argc, char**argv)
   	int			myID;
 	int			N_Procs;
 
-	unsigned int replicates = 100;
+	unsigned int replicates = 10;
 
   	
   	std::map<std::string, std::string> logic;
@@ -71,7 +71,8 @@ for(unsigned int  i = 0; i < replicates; i++)
 	if(logic["Input"] == "carcinogenesis")
 	{
 		if(myID == 0){std::cout << "carcinogenesis \n";}
-		if(myID == 0){std::cout << "VERSION TO RUN: " << logic["Version"] << std::endl;}
+		if(myID == 0){std::cout << "VERSION TO RUN: " << logic["Version"] << std::endl;
+	}
 		
 		Primary -> setVersion_type(logic["Version"] );
 		

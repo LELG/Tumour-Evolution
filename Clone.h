@@ -104,6 +104,14 @@ public:
 	unsigned long long int Clonal_Mutations;
 	double Clonal_Mutational_Burden;
 
+	// For Drug Rersistance Componenets
+	bool Drug_Resistant;
+	bool resistance_in_treatment;
+	unsigned int year_of_resistance;
+	unsigned int hour_of_resistance;
+	double drug_resistance_strength;
+	
+
 public:
 	Clone();
 	~Clone();

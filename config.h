@@ -51,6 +51,8 @@ extern const int MUTATION_MODEL; //= 1;
 
 extern const unsigned long long MAX_CLONE_SIZE;
 
+extern const double P_DRUG_RESISTANCE ;
+
 //g1
 const unsigned int P_STAYING_G1 = 4;
 const unsigned int P_DYING_G1   = 5;

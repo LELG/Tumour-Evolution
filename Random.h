@@ -53,7 +53,7 @@ public:
     double Binomial_newborn(unsigned int Clone_Size, double Adjusted_Proliferation_Rate);
     unsigned int Binomial_Mutants(unsigned int NewBorn_Size, double Mutation_Rate);
 
-    void Uniform_Gain_Update(const double & Parent_mu_rate, const double gain, double & updated_MR);
+    void Uniform_Gain_Update(const double & Parent_mu_rate, const double & gain, double & updated_MR);
     void Uniform_PR_Update(const double & Parent_Proliferation_Rate, const double & Variance, double & updated_PR);
     double Uniform_Mutation_Rate(double mu_rate);
     double Update_Proliferation_Rate(double Proliferation_Rate);
@@ -63,6 +63,9 @@ public:
     void Basic_Clonal_Expansion_Sampling_V1( const unsigned long long int & Clone_Size, const  double & p_dr, const  double & p_pr, const double & p_idle, std::vector<unsigned int> & NewBorn_Cells);
 
     void Basic_Clonal_Expansion_Sampling_V1_HPC(const unsigned long long int & Clone_Size, const double & p_dr, const double & p_pr, std::vector<unsigned long long int> & NewBorn_Cells);
+    void Basic_Clonal_Expansion_Sampling_V2_HPC(const unsigned long long int & Clone_Size, const double & p_dr, const double & p_pr, const double & p_mutate, std::vector<unsigned long long int> & NewBorn_Cells);
+
+    void Basic_Clonal_Expansion_Sampling_V2R_HPC(const unsigned long long int & Clone_Size, const double & p_dr, const double & p_pr, const double & p_mutate, std::vector<unsigned long long int> & NewBorn_Cells);
 
     void Binomial_Mutant( std::tuple<unsigned long long int, 
                                      unsigned long long int, 
@@ -83,6 +86,8 @@ public:
     void Laplace(double & effect);
     void Laplace(double & effect, unsigned int & Clone_size);
     void Mutational_Proportions( const double & p_go_to_G0,const  double & p_go_to_G1, const unsigned int & Mutant_Cells, std::vector<unsigned int> & Mutations );
+
+    void Drug_Resistance_Strength( double & strenght );
 
 private: 
     //std::mt19937 rng;

@@ -21,7 +21,7 @@
 // Deafult Parameters
 Clone::Clone()
 : 
-	Number_of_Memebers_to_Start_Heterogeneity(500), 
+	Number_of_Memebers_to_Start_Heterogeneity(100), 
 	Generation_ID_Counter(0),
 	Driver_10_fold_accumulation(10),
 	clone_extinct(0),
@@ -55,7 +55,13 @@ Clone::Clone()
 	M_cells  (0),
 	Available_cells(0),
 	Clonal_Mutations(0),
-	Clonal_Mutational_Burden(0.0)
+	Clonal_Mutational_Burden(0.0),
+	Drug_Resistant(0),
+	resistance_in_treatment(0),
+	year_of_resistance(0),
+	hour_of_resistance(0),
+	drug_resistance_strength(0.0)
+	
  { }
 
  Clone::~Clone()

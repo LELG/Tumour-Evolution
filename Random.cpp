@@ -92,6 +92,12 @@ double Random::Uniform_Mutation_Rate(double mu_rate)
 	return std::uniform_real_distribution<double>{mu_rate/2.0, mu_rate*2.0}(eng);
 }
 
+ void Random::Drug_Resistance_Strength( double & strenght )
+ {
+ 	strenght = gsl_ran_beta(r_global, 2.0, 2.0);
+ }
+
+
 // double Random::Update_Proliferation_Rate(double Parent_Proliferation_Rate)
 // {
 // 	double U = normal_distribution<double>{Parent_Proliferation_Rate, 0.000001 }(eng);//0.000001
@@ -124,10 +130,24 @@ void Random::Uniform_PR_Update(const double & Parent_Proliferation_Rate, const d
 	updated_PR = U_sample;
 }
 
-void Random::Uniform_Gain_Update(const double & Parent_mu_rate, const double gain, double & updated_MR)
+//////////////////////////////////////////////////
+/////// Mutation Rate Seeds a lot of heterogeneity
+///////////////////////////////////////////////
+void Random::Uniform_Gain_Update(const double & Parent_mu_rate, const double & gain, double & updated_MR)
 {
 	double U = 0.0;
 	U = fabs(std::normal_distribution<double>{Parent_mu_rate * gain, Parent_mu_rate/gain  }(eng)) ;
+	
+	if(U >= 1.0 )
+	{
+		U = 1.0;
+	}
+	
+	if (U < 0.0)
+	{
+		U = 0.0;
+	}
+
 	updated_MR = U;
 
 }
@@ -217,6 +237,61 @@ void Random::Basic_Clonal_Expansion_Sampling_V1_HPC(const unsigned long long int
 		else
 		{
 			std::binomial_distribution<unsigned long long int> distribution( (Clone_Size - cumulative_N), p_vector[i] / (1.0 -cumulative_p) );
+			NewBorn_Cells.push_back( distribution(eng) );
+		}
+		cumulative_N += NewBorn_Cells.at(i);
+		cumulative_p += p_vector[i];
+	
+	}
+	NewBorn_Cells.push_back( Clone_Size - cumulative_N );
+}
+
+void Random::Basic_Clonal_Expansion_Sampling_V2_HPC(const unsigned long long int & Clone_Size, const double & p_dr, const double & p_pr, const double & p_mutate, std::vector<unsigned long long int> & NewBorn_Cells)
+{
+	//p[0] => death Rate
+	//p[1] => proliferation Rate
+	//p[2] => Mutation Rate
+	//p[3] => Other
+	double                     p_vector[] = { p_dr, p_pr, p_mutate, 1.0 - (p_dr + p_pr + p_mutate) };
+	unsigned long long int cumulative_N   = 0;
+	double                 cumulative_p   = 0.0;
+    
+	for(unsigned long long int i = 0; i < 3; i++)
+	{
+		if(p_vector[i] == 0.0)
+		{
+			NewBorn_Cells.push_back(0);
+		}
+		else
+		{
+			std::binomial_distribution<unsigned long long int> distribution( (Clone_Size - cumulative_N), p_vector[i] / (1.0 -cumulative_p) );
+			NewBorn_Cells.push_back( distribution(eng) );
+		}
+		cumulative_N += NewBorn_Cells.at(i);
+		cumulative_p += p_vector[i];
+	
+	}
+	NewBorn_Cells.push_back( Clone_Size - cumulative_N );
+}
+
+
+
+
+void Random::Basic_Clonal_Expansion_Sampling_V2R_HPC(const unsigned long long int & Clone_Size, const double & p_dr, const double & p_pr, const double & p_mutate, std::vector<unsigned long long int> & NewBorn_Cells)
+{
+	double                     p_vector[] = { p_dr, p_pr, p_mutate, P_DRUG_RESISTANCE , 1.0 - ( p_dr + p_pr + p_mutate + P_DRUG_RESISTANCE ) };
+	unsigned long long int cumulative_N   = 0;
+	double                 cumulative_p   = 0.0;
+
+	for(unsigned long long int i = 0; i < 4; i++)
+	{
+		if(p_vector[i] == 0.0)
+		{
+			NewBorn_Cells.push_back(0);
+		}
+		else
+		{
+			std::binomial_distribution<unsigned long long int> distribution( (Clone_Size - cumulative_N), p_vector[i] / (1.0 - cumulative_p) );
 			NewBorn_Cells.push_back( distribution(eng) );
 		}
 		cumulative_N += NewBorn_Cells.at(i);
