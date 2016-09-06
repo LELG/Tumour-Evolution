@@ -1085,12 +1085,12 @@ bool check_valid_folders(const std::string & path_to_core, const std::string & p
 }
 
 
-void build_settings_path(const std::string & path_to_core, std::string & path_to_settings)
+void build_settings_path(const std::string & path_to_core, std::string & path_to_settings, const std::string & file_extension)
 {
 	path_to_settings = path_to_core + "settings/";
 	if( check_valid_folders( path_to_core, path_to_settings) )
 	{
-		path_to_settings +=  "logic_flow.lgic";
+		path_to_settings +=  "logic_flow" + file_extension +  ".lgic";
 		if(!FileExists (path_to_settings))
 		{
 			std::cout << "ERROR: FILE NOT FOUND \n" ;
@@ -1103,7 +1103,7 @@ void build_settings_path(const std::string & path_to_core, std::string & path_to
 }
 
 
-void Load_Logic_File(std::map<std::string, std::string> & logic )
+void Load_Logic_File(std::map<std::string, std::string> & logic, const std::string & file_extension )
 {
 	//using namespace std;
 	char buffer[1000];
@@ -1117,10 +1117,10 @@ void Load_Logic_File(std::map<std::string, std::string> & logic )
 	if (path)
 	{
     	s_path = path;
-    	std::cout << "DIR: " << s_path << std::endl; 
+    	//std::cout << "DIR: " << s_path << std::endl; 
     	trim_path_to_vector(tokens, s_path);
     	build_core_path(tokens, path_to_core);
-    	build_settings_path(path_to_core,  path_to_logic_file);
+    	build_settings_path(path_to_core,  path_to_logic_file, file_extension);
 	
 	}
 	std::cout << path_to_logic_file << std::endl;

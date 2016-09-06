@@ -190,7 +190,7 @@ void Random::Update_Proliferation_Rate_V2(const double & Parent_Proliferation_Ra
 {
 	
 
-	new_PR = Parent_Proliferation_Rate + std::normal_distribution<double>{0.01, 0.05 }(eng);
+	new_PR = Parent_Proliferation_Rate + fabs( std::normal_distribution<double>{0.01, 0.05 }(eng) );
 	if(new_PR >= 0.2)
 		new_PR = 0.2;	
 

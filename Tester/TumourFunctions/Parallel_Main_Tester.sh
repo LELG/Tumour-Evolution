@@ -26,6 +26,6 @@ g++-4.9 -L/usr/local/opt/libevent/lib -L/usr/local/Cellar/open-mpi/1.10.2/lib -l
  rm Main_Tester.o
  
 
- mpirun -n 1 ./Main_Tester
+ mpirun -n 2 ./Main_Tester _Test
 
 rm Main_Tester

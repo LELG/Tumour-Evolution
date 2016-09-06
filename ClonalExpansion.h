@@ -181,6 +181,8 @@ public:
  	void Select_Beneficial_distribution(double & Penalty);
  	void carcinogenesis_V1(void);
  	void carcinogenesis_V2(void);
+ 	void carcinogenesis_V2_File_Input(const double & mutation_rate, const double & proliferation_rate);
+ 	void carcinogenesis_V1_File_Input(const double & mutation_rate);
 
 	void Generate_Clone_Generation_ID( std::string & newGeneration_ID,
 								  const int & Parent_Generation_ID_Counter, 
@@ -375,6 +377,9 @@ public:
 	void Path_Bcast_From_Master(const std::string & data_path);
 	void Path_Bcast_From_Salves(std::string & data_path, int & myID);
 	void Compute_Tumour_Growth_V1(const std::map<std::string, std::string> &logic, unsigned int & replicates, int & myID, std::string & data_path );
+	double Lerp(double v0, double v1, double t);
+	std::vector<double> Quantile(const std::vector<double>& inData, const std::vector<double>& probs);
+	void Quartile_Computation_Growth_Simulation(const std::string & data_path);
 
 	
 };

@@ -26,7 +26,7 @@ int main(int argc, char**argv)
   	int			myID;
 	int			N_Procs;
 
-	unsigned int replicates = 10;
+	unsigned int replicates = 1;
 
   	
   	std::map<std::string, std::string> logic;
@@ -38,15 +38,21 @@ int main(int argc, char**argv)
 	MPI_Comm_size(MPI_COMM_WORLD,	&N_Procs);
   	
 
+	std::string file_extension = argv[1];
+	//std::cout << "ID: " << myID << " arg " << file_extension << std::endl;
 
-  	Load_Logic_File(logic);
+  	Load_Logic_File(logic, file_extension);
 
   	std::string data_path = "";
 
-  	if(logic.size() >= 1)
-	{
-		print_logic_file(logic);
-	}
+
+ //  	if(logic.size() >= 1 && myID == 0)
+	// {
+	// 	std::cout << "ID: " << myID << " PRINTING FILES " << std::endl;
+	// 	std::cout << ":::::::::::::::::::::::::::::::::::::::::::::" << std::endl;
+	// 	print_logic_file(logic);
+	// 	std::cout << "::::::::::::::::::::::::::::::::::::::::::::::" << std::endl;
+	// }
 
 	//std::cout << "VERSION TO RUN: " << logic["Version"] << std::endl;
 
@@ -57,26 +63,25 @@ for(unsigned int  i = 0; i < replicates; i++)
 	
 	if(logic["Growth"] == "Primary")
 	{
-		if(myID == 0) {std::cout << "Primary \n";}
+		//if(myID == 0) {std::cout << "Primary \n";}
 		Primary = get_Clonal_Expasion_DS();
 	}
 	else
 	{
-		if(myID == 0) {std::cout << " Multiple \n";}
+		//if(myID == 0) {std::cout << " Multiple \n";}
 		//lop with metastasis or multiple primary tumours
 	}
 
 	// Input
-	if(myID == 0){std::cout << "Input of Growth: " ;}
+	//if(myID == 0){std::cout << "Input of Growth: " ;}
 	if(logic["Input"] == "carcinogenesis")
 	{
-		if(myID == 0){std::cout << "carcinogenesis \n";}
-		if(myID == 0){std::cout << "VERSION TO RUN: " << logic["Version"] << std::endl;
-	}
+		//if(myID == 0){std::cout << "carcinogenesis \n";}
+		//if(myID == 0){std::cout << "VERSION TO RUN: " << logic["Version"] << std::endl;}
 		
 		Primary -> setVersion_type(logic["Version"] );
 		
-		if(myID == 0){std::cout << Primary -> getVersion_type() << " associated with ID " <<  Primary -> Version << std::endl;}
+		//if(myID == 0){std::cout << Primary -> getVersion_type() << " associated with ID " <<  Primary -> Version << std::endl;}
 
 		Primary -> Compute_Tumour_Growth(logic, i, myID, data_path );/// can take out of here
 		

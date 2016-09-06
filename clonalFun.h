@@ -84,8 +84,8 @@ void Compute_Tumour_Growth(std::unique_ptr<Clonal_Expansion>  & tmr, std::string
 void trim_path_to_vector(std::vector<std::string> & tokens, const std::string & s_path);
 void build_core_path(std::vector<std::string> & tokens, std::string & path_to_core);
 bool check_valid_folders(const std::string & path_to_core, const std::string & path_to_settings);
-void build_settings_path(const std::string & path_to_core, std::string & path_to_settings);
-void Load_Logic_File(std::map<std::string, std::string> & logic );
+void build_settings_path(const std::string & path_to_core, std::string & path_to_settings, const std::string & file_extension);
+void Load_Logic_File(std::map<std::string, std::string> & logic, const std::string & file_extension );
 void print_logic_file(const std::map<std::string, std::string> & logic);
 
 #endif
